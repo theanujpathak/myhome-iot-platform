@@ -1,0 +1,256 @@
+# Test Framework Configuration
+# Configuration for firmware testing and validation
+
+# Supported platforms
+platforms:
+  - esp32
+  - esp8266
+  - arduino
+  - stm32
+  - pico
+
+# Test suites directory
+test_suites_dir: "test_suites"
+
+# Hardware interfaces configuration
+hardware_interfaces:
+  esp32:
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+    flash_baudrate: 921600
+    reset_method: "hard_reset"
+    
+  esp8266:
+    port: "/dev/ttyUSB1"
+    baudrate: 115200
+    flash_baudrate: 460800
+    reset_method: "hard_reset"
+    
+  arduino:
+    port: "/dev/ttyUSB2"
+    baudrate: 9600
+    flash_baudrate: 57600
+    reset_method: "soft_reset"
+    
+  stm32:
+    port: "/dev/ttyUSB3"
+    baudrate: 115200
+    flash_baudrate: 115200
+    reset_method: "hard_reset"
+    
+  pico:
+    port: "/dev/ttyACM0"
+    baudrate: 115200
+    flash_baudrate: 115200
+    reset_method: "soft_reset"
+
+# Network interfaces configuration
+network_interfaces:
+  esp32:
+    host: "192.168.1.100"
+    port: 80
+    mqtt_port: 1883
+    
+  esp8266:
+    host: "192.168.1.101"
+    port: 80
+    mqtt_port: 1883
+
+# Test execution configuration
+execution:
+  parallel_execution: true
+  max_parallel_tests: 4
+  default_timeout: 30
+  max_retries: 3
+  retry_delay: 2
+
+# Timeout configuration
+timeouts:
+  default: 30
+  boot: 15
+  flash: 120
+  network: 10
+  wifi_scan: 20
+  wifi_connect: 30
+  mqtt: 15
+  gpio: 5
+  i2c: 10
+  spi: 10
+  performance: 60
+
+# Quality gates
+quality_gates:
+  # Minimum success rate for test suite to pass
+  min_success_rate: 80
+  
+  # Maximum acceptable test execution time
+  max_execution_time: 300
+  
+  # Critical tests that must pass
+  critical_tests:
+    - "boot_test"
+    - "memory_test"
+    - "safety_test"
+  
+  # Performance thresholds
+  performance_thresholds:
+    boot_time: 5.0          # seconds
+    wifi_connect_time: 10.0  # seconds
+    min_free_heap: 50000    # bytes
+    max_cpu_usage: 80       # percentage
+
+# Test categories
+test_categories:
+  smoke:
+    description: "Quick smoke tests"
+    timeout: 60
+    required: true
+    
+  functional:
+    description: "Functional validation tests"
+    timeout: 300
+    required: true
+    
+  integration:
+    description: "Integration tests"
+    timeout: 600
+    required: false
+    
+  performance:
+    description: "Performance tests"
+    timeout: 900
+    required: false
+    
+  stress:
+    description: "Stress tests"
+    timeout: 1800
+    required: false
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "test-framework.log"
+  max_file_size: 10485760  # 10MB
+  backup_count: 5
+  console_output: true
+
+# Report configuration
+reporting:
+  format: "json"  # json, xml, html
+  include_output: true
+  include_screenshots: false
+  output_directory: "test_reports"
+  
+  # Email notification settings
+  email_notifications:
+    enabled: false
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
+    username: "test@company.com"
+    password: "password"
+    recipients:
+      - "dev-team@company.com"
+      - "qa-team@company.com"
+    
+  # Slack notification settings
+  slack_notifications:
+    enabled: false
+    webhook_url: "https://hooks.slack.com/services/..."
+    channel: "#firmware-tests"
+
+# Test data configuration
+test_data:
+  # WiFi credentials for testing
+  wifi:
+    test_ssid: "TestNetwork"
+    test_password: "TestPassword"
+    
+  # MQTT broker for testing
+  mqtt:
+    broker: "test-broker.company.com"
+    port: 1883
+    username: "test"
+    password: "test"
+    
+  # Test server endpoints
+  endpoints:
+    api_base: "http://test-api.company.com"
+    websocket: "ws://test-ws.company.com"
+    
+  # Device credentials
+  device_credentials:
+    test_device_id: "TEST_DEVICE_001"
+    test_device_secret: "test_secret_123"
+
+# Platform-specific configurations
+platform_configs:
+  esp32:
+    memory_tests:
+      min_free_heap: 100000
+      max_heap_fragmentation: 20
+      
+    performance_tests:
+      max_boot_time: 3.0
+      min_cpu_frequency: 240000000
+      
+    gpio_tests:
+      test_pins: [2, 4, 5, 12, 13, 14, 15]
+      
+    wifi_tests:
+      scan_timeout: 15
+      connect_timeout: 20
+      
+  esp8266:
+    memory_tests:
+      min_free_heap: 25000
+      max_heap_fragmentation: 30
+      
+    performance_tests:
+      max_boot_time: 5.0
+      min_cpu_frequency: 80000000
+      
+    gpio_tests:
+      test_pins: [0, 2, 4, 5, 12, 13, 14, 15]
+      
+  arduino:
+    memory_tests:
+      min_free_sram: 1000
+      
+    performance_tests:
+      max_boot_time: 2.0
+      min_cpu_frequency: 16000000
+      
+    gpio_tests:
+      test_pins: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+# Firmware validation rules
+validation_rules:
+  # File validation
+  file_validation:
+    check_size: true
+    check_checksum: true
+    max_size:
+      esp32: 3145728      # 3MB
+      esp8266: 1048576    # 1MB
+      arduino: 30720      # 30KB
+      stm32: 524288       # 512KB
+      pico: 2097152       # 2MB
+      
+  # Security validation
+  security_validation:
+    check_vulnerabilities: true
+    scan_for_secrets: true
+    validate_certificates: true
+    
+  # Code quality validation
+  code_quality:
+    check_static_analysis: true
+    check_code_coverage: true
+    min_coverage: 70
+    
+  # Performance validation
+  performance_validation:
+    check_memory_usage: true
+    check_cpu_usage: true
+    check_power_consumption: true

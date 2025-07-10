@@ -1,0 +1,434 @@
+name: Firmware Build and Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware-build.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'firmware/**'
+  schedule:
+    # Build nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build (comma-separated)'
+        required: false
+        default: 'all'
+      deploy_environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - testing
+          - staging
+          - production
+      auto_deploy:
+        description: 'Auto-deploy after build'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PLATFORMIO_CACHE_DIR: ~/.platformio
+  FIRMWARE_VERSION: ${{ github.run_number }}
+  
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.changes.outputs.platforms }}
+      should_build: ${{ steps.changes.outputs.should_build }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    
+    - name: Detect changed platforms
+      id: changes
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event.inputs.platforms }}" == "all" ]]; then
+            echo "platforms=[\"esp32-smart-light\", \"esp8266-switch\", \"arduino-uno-gateway\", \"stm32-sensor-hub\", \"raspberry-pi-pico\"]" >> $GITHUB_OUTPUT
+          else
+            IFS=',' read -ra PLATFORMS <<< "${{ github.event.inputs.platforms }}"
+            PLATFORMS_JSON=$(printf '%s\n' "${PLATFORMS[@]}" | jq -R . | jq -s .)
+            echo "platforms=${PLATFORMS_JSON}" >> $GITHUB_OUTPUT
+          fi
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        else
+          # Detect changes in firmware directories
+          CHANGED_PLATFORMS=()
+          for platform in esp32-smart-light esp8266-switch arduino-uno-gateway stm32-sensor-hub raspberry-pi-pico; do
+            if git diff --name-only HEAD~1 HEAD | grep -q "firmware/${platform}/"; then
+              CHANGED_PLATFORMS+=("${platform}")
+            fi
+          done
+          
+          if [[ ${#CHANGED_PLATFORMS[@]} -gt 0 ]]; then
+            PLATFORMS_JSON=$(printf '%s\n' "${CHANGED_PLATFORMS[@]}" | jq -R . | jq -s .)
+            echo "platforms=${PLATFORMS_JSON}" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=[]" >> $GITHUB_OUTPUT
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+
+  build-firmware:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.detect-changes.outputs.platforms) }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Cache PlatformIO
+      uses: actions/cache@v3
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-platformio-${{ hashFiles('**/platformio.ini') }}
+        restore-keys: |
+          ${{ runner.os }}-platformio-
+    
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq bc
+    
+    - name: Update build configuration
+      run: |
+        cd firmware
+        # Update version and build number
+        jq ".version = \"1.0.${{ github.run_number }}\"" build-config.json > tmp.json && mv tmp.json build-config.json
+        jq ".build_number = ${{ github.run_number }}" build-config.json > tmp.json && mv tmp.json build-config.json
+        
+        # Set environment-specific configuration
+        if [[ "${{ github.event.inputs.deploy_environment }}" == "production" ]]; then
+          jq '.optimization = "release"' build-config.json > tmp.json && mv tmp.json build-config.json
+          jq '.debug = false' build-config.json > tmp.json && mv tmp.json build-config.json
+          jq '.security.enable_secure_boot = true' build-config.json > tmp.json && mv tmp.json build-config.json
+        elif [[ "${{ github.event.inputs.deploy_environment }}" == "development" ]]; then
+          jq '.debug = true' build-config.json > tmp.json && mv tmp.json build-config.json
+        fi
+    
+    - name: Build firmware
+      run: |
+        cd firmware/${{ matrix.platform }}
+        pio run
+    
+    - name: Run tests
+      run: |
+        cd firmware/${{ matrix.platform }}
+        # Run unit tests if they exist
+        if [ -d "test" ]; then
+          pio test
+        fi
+    
+    - name: Generate firmware metadata
+      run: |
+        cd firmware
+        # Find the built firmware file
+        FIRMWARE_FILE=""
+        case "${{ matrix.platform }}" in
+          esp32*|esp8266*)
+            FIRMWARE_FILE=$(find ${{ matrix.platform }}/.pio/build -name "*.bin" | head -1)
+            ;;
+          arduino*|stm32*)
+            FIRMWARE_FILE=$(find ${{ matrix.platform }}/.pio/build -name "*.hex" | head -1)
+            ;;
+          *pico*)
+            FIRMWARE_FILE=$(find ${{ matrix.platform }}/.pio/build -name "*.uf2" | head -1)
+            ;;
+        esac
+        
+        if [[ -n "$FIRMWARE_FILE" && -f "$FIRMWARE_FILE" ]]; then
+          # Calculate metadata
+          FILE_SIZE=$(stat -c%s "$FIRMWARE_FILE")
+          CHECKSUM=$(sha256sum "$FIRMWARE_FILE" | cut -d' ' -f1)
+          
+          # Create metadata
+          cat > "${FIRMWARE_FILE}.metadata.json" << EOF
+        {
+          "platform": "${{ matrix.platform }}",
+          "version": "1.0.${{ github.run_number }}",
+          "build_number": ${{ github.run_number }},
+          "build_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "git_commit": "${{ github.sha }}",
+          "git_branch": "${{ github.ref_name }}",
+          "environment": "${{ github.event.inputs.deploy_environment || 'development' }}",
+          "file_size": $FILE_SIZE,
+          "checksum": "$CHECKSUM",
+          "build_system": "github-actions"
+        }
+        EOF
+        fi
+    
+    - name: Upload firmware artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: firmware-${{ matrix.platform }}-${{ github.run_number }}
+        path: |
+          firmware/${{ matrix.platform }}/.pio/build/**/*.bin
+          firmware/${{ matrix.platform }}/.pio/build/**/*.hex
+          firmware/${{ matrix.platform }}/.pio/build/**/*.uf2
+          firmware/${{ matrix.platform }}/.pio/build/**/*.metadata.json
+        retention-days: 30
+    
+    - name: Security scan
+      run: |
+        cd firmware/${{ matrix.platform }}
+        # Run security scans on the firmware
+        echo "Running security scan..."
+        # This would integrate with tools like Checkmarx, SonarQube, etc.
+        # For now, we'll do basic checks
+        
+        # Check for hardcoded secrets
+        if grep -r "password\|secret\|key" src/ --include="*.cpp" --include="*.h" | grep -v "//"; then
+          echo "⚠️  Warning: Potential hardcoded secrets found"
+        fi
+        
+        # Check for insecure functions
+        if grep -r "strcpy\|strcat\|sprintf" src/ --include="*.cpp" --include="*.h"; then
+          echo "⚠️  Warning: Potentially insecure functions found"
+        fi
+
+  quality-gates:
+    needs: [detect-changes, build-firmware]
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Quality gate checks
+      run: |
+        cd firmware
+        
+        # Load configuration
+        MAX_ESP32_SIZE=$(jq -r '.quality_gates.max_firmware_size.esp32' build-config.json)
+        MAX_ESP8266_SIZE=$(jq -r '.quality_gates.max_firmware_size.esp8266' build-config.json)
+        MAX_ARDUINO_SIZE=$(jq -r '.quality_gates.max_firmware_size.arduino' build-config.json)
+        
+        # Check firmware sizes
+        for artifact in ../firmware-*; do
+          if [[ -d "$artifact" ]]; then
+            platform=$(basename "$artifact" | sed 's/firmware-\(.*\)-[0-9]*/\1/')
+            
+            # Find firmware file
+            FIRMWARE_FILE=""
+            case "$platform" in
+              esp32*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.bin" | head -1)
+                MAX_SIZE=$MAX_ESP32_SIZE
+                ;;
+              esp8266*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.bin" | head -1)
+                MAX_SIZE=$MAX_ESP8266_SIZE
+                ;;
+              arduino*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.hex" | head -1)
+                MAX_SIZE=$MAX_ARDUINO_SIZE
+                ;;
+            esac
+            
+            if [[ -n "$FIRMWARE_FILE" && -f "$FIRMWARE_FILE" ]]; then
+              SIZE=$(stat -c%s "$FIRMWARE_FILE")
+              echo "Platform: $platform, Size: $SIZE bytes, Max: $MAX_SIZE bytes"
+              
+              if [[ $SIZE -gt $MAX_SIZE ]]; then
+                echo "❌ Quality gate failed: $platform firmware size ($SIZE) exceeds maximum ($MAX_SIZE)"
+                exit 1
+              else
+                echo "✅ Quality gate passed: $platform firmware size OK"
+              fi
+            fi
+          fi
+        done
+
+  deploy-to-ota:
+    needs: [detect-changes, build-firmware, quality-gates]
+    if: needs.detect-changes.outputs.should_build == 'true' && (github.event.inputs.auto_deploy == 'true' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.deploy_environment || 'development' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Deploy to OTA service
+      env:
+        OTA_SERVICE_URL: ${{ secrets.OTA_SERVICE_URL }}
+        OTA_API_TOKEN: ${{ secrets.OTA_API_TOKEN }}
+      run: |
+        for artifact in firmware-*; do
+          if [[ -d "$artifact" ]]; then
+            platform=$(basename "$artifact" | sed 's/firmware-\(.*\)-[0-9]*/\1/')
+            
+            # Find firmware file and metadata
+            FIRMWARE_FILE=""
+            METADATA_FILE=""
+            
+            case "$platform" in
+              esp32*|esp8266*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.bin" | head -1)
+                METADATA_FILE=$(find "$artifact" -name "*.metadata.json" | head -1)
+                ;;
+              arduino*|stm32*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.hex" | head -1)
+                METADATA_FILE=$(find "$artifact" -name "*.metadata.json" | head -1)
+                ;;
+              *pico*)
+                FIRMWARE_FILE=$(find "$artifact" -name "*.uf2" | head -1)
+                METADATA_FILE=$(find "$artifact" -name "*.metadata.json" | head -1)
+                ;;
+            esac
+            
+            if [[ -n "$FIRMWARE_FILE" && -f "$FIRMWARE_FILE" && -n "$METADATA_FILE" && -f "$METADATA_FILE" ]]; then
+              # Extract metadata
+              VERSION=$(jq -r '.version' "$METADATA_FILE")
+              ENVIRONMENT=$(jq -r '.environment' "$METADATA_FILE")
+              
+              # Map platform to device type
+              case "$platform" in
+                esp32*)
+                  DEVICE_TYPE="ESP32"
+                  BOARD_MODEL="ESP32-WROOM-32"
+                  ;;
+                esp8266*)
+                  DEVICE_TYPE="ESP8266"
+                  BOARD_MODEL="NodeMCU"
+                  ;;
+                arduino*)
+                  DEVICE_TYPE="Arduino Uno"
+                  BOARD_MODEL="Arduino Uno R3"
+                  ;;
+                stm32*)
+                  DEVICE_TYPE="STM32"
+                  BOARD_MODEL="STM32F411RE"
+                  ;;
+                *pico*)
+                  DEVICE_TYPE="Raspberry Pi Pico"
+                  BOARD_MODEL="Pico W"
+                  ;;
+              esac
+              
+              # Upload to OTA service
+              echo "Uploading $platform firmware to OTA service..."
+              
+              curl -X POST "$OTA_SERVICE_URL/api/firmware/upload" \
+                -H "Authorization: Bearer $OTA_API_TOKEN" \
+                -F "firmware_file=@$FIRMWARE_FILE" \
+                -F "device_type=$DEVICE_TYPE" \
+                -F "board_model=$BOARD_MODEL" \
+                -F "version=$VERSION" \
+                -F "status=$ENVIRONMENT" \
+                -F "description=Automated build from GitHub Actions" \
+                -F "changelog=Build #${{ github.run_number }} - Commit ${{ github.sha }}" \
+                --fail-with-body
+              
+              if [[ $? -eq 0 ]]; then
+                echo "✅ Successfully uploaded $platform firmware"
+              else
+                echo "❌ Failed to upload $platform firmware"
+                exit 1
+              fi
+            fi
+          fi
+        done
+
+  create-release:
+    needs: [detect-changes, build-firmware, quality-gates, deploy-to-ota]
+    if: needs.detect-changes.outputs.should_build == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: firmware-v1.0.${{ github.run_number }}
+        release_name: Firmware Release v1.0.${{ github.run_number }}
+        body: |
+          ## Firmware Release v1.0.${{ github.run_number }}
+          
+          **Built from commit:** ${{ github.sha }}
+          **Build date:** ${{ github.event.head_commit.timestamp }}
+          
+          ### Changes
+          ${{ github.event.head_commit.message }}
+          
+          ### Platforms Built
+          ${{ needs.detect-changes.outputs.platforms }}
+          
+          ### Quality Gates
+          ✅ All quality gates passed
+          ✅ Security scan completed
+          ✅ Firmware size within limits
+          
+          ### Deployment
+          ✅ Deployed to OTA service
+          
+        draft: false
+        prerelease: false
+    
+    - name: Upload release assets
+      run: |
+        # This would upload the firmware files to the release
+        echo "Uploading firmware files to release..."
+
+  notify:
+    needs: [detect-changes, build-firmware, quality-gates, deploy-to-ota]
+    if: always() && needs.detect-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#firmware-builds'
+        text: |
+          Firmware build ${{ github.run_number }} - ${{ job.status }}
+          Platforms: ${{ needs.detect-changes.outputs.platforms }}
+          Commit: ${{ github.sha }}
+          Environment: ${{ github.event.inputs.deploy_environment || 'development' }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: Notify teams
+      if: failure()
+      run: |
+        # Send notifications to development team
+        echo "Sending failure notification to development team..."
+        # This would integrate with email, Teams, Discord, etc.

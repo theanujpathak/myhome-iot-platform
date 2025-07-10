@@ -1,0 +1,144 @@
+[
+  {
+    "test": "Device Service Health",
+    "passed": true,
+    "message": "Service healthy: healthy",
+    "details": {
+      "status_code": 200,
+      "response": {
+        "status": "healthy",
+        "service": "device-service"
+      }
+    },
+    "timestamp": "2025-07-10T00:17:29.592653"
+  },
+  {
+    "test": "User Service Health",
+    "passed": true,
+    "message": "Service healthy: healthy",
+    "details": {
+      "status_code": 200,
+      "response": {
+        "status": "healthy",
+        "service": "user-service"
+      }
+    },
+    "timestamp": "2025-07-10T00:17:29.610161"
+  },
+  {
+    "test": "Scheduler Service Health",
+    "passed": true,
+    "message": "Service healthy: healthy",
+    "details": {
+      "status_code": 200,
+      "response": {
+        "status": "healthy",
+        "service": "scheduler-service"
+      }
+    },
+    "timestamp": "2025-07-10T00:17:29.654780"
+  },
+  {
+    "test": "OTA Service Health",
+    "passed": true,
+    "message": "Service healthy: healthy",
+    "details": {
+      "status_code": 200,
+      "response": {
+        "status": "healthy",
+        "service": "ota-service"
+      }
+    },
+    "timestamp": "2025-07-10T00:17:29.673215"
+  },
+  {
+    "test": "Frontend Accessibility",
+    "passed": true,
+    "message": "Frontend accessible and serving content",
+    "details": {
+      "status_code": 200
+    },
+    "timestamp": "2025-07-10T00:17:29.713127"
+  },
+  {
+    "test": "Auth Protection - GET /api/devices",
+    "passed": true,
+    "message": "Correctly requires authentication",
+    "details": {
+      "status_code": 403
+    },
+    "timestamp": "2025-07-10T00:17:29.725145"
+  },
+  {
+    "test": "Auth Protection - GET /api/locations",
+    "passed": true,
+    "message": "Correctly requires authentication",
+    "details": {
+      "status_code": 403
+    },
+    "timestamp": "2025-07-10T00:17:29.732247"
+  },
+  {
+    "test": "Auth Protection - GET /api/device-types",
+    "passed": true,
+    "message": "Correctly requires authentication",
+    "details": {
+      "status_code": 403
+    },
+    "timestamp": "2025-07-10T00:17:29.737297"
+  },
+  {
+    "test": "Device Creation Payload 1",
+    "passed": true,
+    "message": "Auth required (expected)",
+    "details": {
+      "status_code": 403
+    },
+    "timestamp": "2025-07-10T00:17:29.752393"
+  },
+  {
+    "test": "Device Creation Payload 2",
+    "passed": true,
+    "message": "Auth required (expected)",
+    "details": {
+      "status_code": 403
+    },
+    "timestamp": "2025-07-10T00:17:29.757480"
+  },
+  {
+    "test": "Provisioning - GET /api/admin/provisioning/batches",
+    "passed": false,
+    "message": "Endpoint not found - not implemented",
+    "details": {
+      "status_code": 404
+    },
+    "timestamp": "2025-07-10T00:17:29.765368"
+  },
+  {
+    "test": "Provisioning - POST /api/admin/provisioning/bulk",
+    "passed": false,
+    "message": "Endpoint not found - not implemented",
+    "details": {
+      "status_code": 404
+    },
+    "timestamp": "2025-07-10T00:17:29.769755"
+  },
+  {
+    "test": "CORS Configuration",
+    "passed": false,
+    "message": "CORS preflight failed: 405",
+    "details": {
+      "status_code": 405
+    },
+    "timestamp": "2025-07-10T00:17:29.774709"
+  },
+  {
+    "test": "MQTT Connection",
+    "passed": true,
+    "message": "MQTT broker connection detected in logs",
+    "details": {
+      "note": "Based on service logs showing MQTT broker connections"
+    },
+    "timestamp": "2025-07-10T00:17:29.774726"
+  }
+]

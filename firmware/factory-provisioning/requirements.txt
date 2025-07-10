@@ -1,0 +1,21 @@
+# Factory Provisioning System Requirements
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+pyserial>=3.5
+requests>=2.28.0
+PyYAML>=6.0
+esptool>=4.5.0
+
+# QR Code generation
+qrcode[pil]>=7.3.1
+
+# Optional dependencies for enhanced functionality
+colorama>=0.4.6      # Colored terminal output
+tqdm>=4.64.0         # Progress bars
+click>=8.0.0         # Enhanced CLI interface
+
+# Development dependencies (optional)
+pytest>=7.0.0        # Testing framework
+black>=22.0.0        # Code formatting
+flake8>=4.0.0        # Code linting

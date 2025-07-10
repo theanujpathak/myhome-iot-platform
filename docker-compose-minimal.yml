@@ -1,0 +1,52 @@
+services:
+  # Home Automation Database (separate from your existing PostgreSQL)
+  home-automation-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=home_automation
+      - POSTGRES_USER=homeuser
+      - POSTGRES_PASSWORD=homepass
+    volumes:
+      - home_automation_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Using port 5433 to avoid conflict with your port 5432
+    networks:
+      - home-automation-network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Using port 6380 to avoid potential conflicts
+    volumes:
+      - redis_data:/data
+    networks:
+      - home-automation-network
+
+  # MQTT Broker (EMQX)
+  mqtt-broker:
+    image: emqx/emqx:latest
+    ports:
+      - "1884:1883"    # MQTT port changed to avoid conflicts
+      - "8085:8083"    # WebSocket port changed
+      - "8086:8084"    # WebSocket SSL port changed
+      - "8884:8883"    # MQTTS port changed
+      - "18084:18083"  # Management dashboard changed
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_HOST=127.0.0.1
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_logs:/opt/emqx/log
+    networks:
+      - home-automation-network
+
+volumes:
+  home_automation_db_data:
+  redis_data:
+  emqx_data:
+  emqx_logs:
+
+networks:
+  home-automation-network:
+    driver: bridge

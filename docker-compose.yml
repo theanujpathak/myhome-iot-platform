@@ -1,0 +1,185 @@
+services:
+  # Keycloak for SSO
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    command: start-dev
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
+    ports:
+      - "8080:8080"
+    depends_on:
+      - keycloak-db
+    volumes:
+      - ./keycloak-data:/opt/keycloak/data
+    networks:
+      - home-automation-network
+
+  # Keycloak Database
+  keycloak-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - home-automation-network
+
+  # Home Automation Database
+  home-automation-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=home_automation
+      - POSTGRES_USER=homeuser
+      - POSTGRES_PASSWORD=homepass
+    volumes:
+      - home_automation_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - home-automation-network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - home-automation-network
+
+  # MQTT Broker (EMQX)
+  mqtt-broker:
+    image: emqx/emqx:latest
+    ports:
+      - "1883:1883"
+      - "8083:8083"
+      - "8084:8084"
+      - "8883:8883"
+      - "18083:18083"
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_HOST=127.0.0.1
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_logs:/opt/emqx/log
+    networks:
+      - home-automation-network
+
+  # User Service
+  user-service:
+    build: ./backend/user-service
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://homeuser:homepass@home-automation-db:5432/home_automation
+      - REDIS_URL=redis://redis:6379
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=home-automation
+      - KEYCLOAK_CLIENT_ID=home-automation-backend
+    depends_on:
+      - home-automation-db
+      - redis
+      - keycloak
+    networks:
+      - home-automation-network
+
+  # Device Service
+  device-service:
+    build: ./backend/device-service
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://homeuser:homepass@home-automation-db:5432/home_automation
+      - REDIS_URL=redis://redis:6379
+      - MQTT_URL=mqtt://mqtt-broker:1883
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=home-automation
+      - KEYCLOAK_CLIENT_ID=home-automation-backend
+    depends_on:
+      - home-automation-db
+      - redis
+      - mqtt-broker
+      - keycloak
+    networks:
+      - home-automation-network
+
+  # Scheduler Service
+  scheduler-service:
+    build: ./backend/scheduler-service
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://homeuser:homepass@home-automation-db:5432/home_automation
+      - REDIS_URL=redis://redis:6379
+      - MQTT_URL=mqtt://mqtt-broker:1883
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=home-automation
+      - KEYCLOAK_CLIENT_ID=home-automation-backend
+    depends_on:
+      - home-automation-db
+      - redis
+      - mqtt-broker
+      - keycloak
+    networks:
+      - home-automation-network
+
+  # OTA Service
+  ota-service:
+    build: ./backend/ota-service
+    ports:
+      - "3004:3004"
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=home-automation
+      - KEYCLOAK_CLIENT_ID=home-automation-backend
+      - REDIS_URL=redis://redis:6379
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - redis
+      - mqtt-broker
+      - keycloak
+    volumes:
+      - ./firmware_storage:/app/firmware_storage
+    networks:
+      - home-automation-network
+
+  # Home Automation Frontend
+  home-automation-frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - REACT_APP_KEYCLOAK_REALM=home-automation
+      - REACT_APP_KEYCLOAK_CLIENT_ID=home-automation-frontend
+    depends_on:
+      - user-service
+      - device-service
+      - scheduler-service
+      - ota-service
+    networks:
+      - home-automation-network
+
+volumes:
+  keycloak_db_data:
+  home_automation_db_data:
+  redis_data:
+  emqx_data:
+  emqx_logs:
+
+networks:
+  home-automation-network:
+    driver: bridge

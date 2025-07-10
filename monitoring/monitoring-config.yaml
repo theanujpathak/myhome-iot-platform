@@ -1,0 +1,755 @@
+# Monitoring and Alerting System Configuration
+
+# Global settings
+global:
+  organization: "MyHome IoT"
+  project: "Device Management Platform"
+  environment: "production"
+  
+# Database configuration
+database:
+  path: "monitoring.db"
+  retention_days: 30
+  backup_enabled: true
+  backup_path: "/backup/monitoring"
+  
+# Metrics configuration
+metrics:
+  collection_interval: 60
+  retention_days: 30
+  prometheus_port: 8080
+  enable_histogram: true
+  enable_summary: true
+  
+# Alerting configuration
+alerting:
+  evaluation_interval: 60
+  notification_timeout: 300
+  max_retries: 3
+  retry_delay: 60
+  group_wait: 300
+  group_interval: 300
+  repeat_interval: 3600
+  
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "monitoring.log"
+  max_size: "100MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# Notification channels
+notifications:
+  email:
+    enabled: true
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    from_email: "alerts@i4planet.com"
+    username: "alerts@i4planet.com"
+    password: "your-app-password"
+    recipients:
+      - "admin@i4planet.com"
+      - "devops@i4planet.com"
+      - "support@i4planet.com"
+    template_path: "templates/email"
+    
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    channel: "#alerts"
+    username: "MonitoringBot"
+    icon_emoji: ":warning:"
+    mention_channel: true
+    
+  webhook:
+    enabled: true
+    url: "https://api.i4planet.com/webhook/alerts"
+    method: "POST"
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer YOUR_WEBHOOK_TOKEN"
+    timeout: 30
+    
+  sms:
+    enabled: false
+    provider: "twilio"
+    account_sid: "YOUR_TWILIO_ACCOUNT_SID"
+    auth_token: "YOUR_TWILIO_AUTH_TOKEN"
+    from_number: "+1234567890"
+    recipients:
+      - "+1987654321"
+      
+  pagerduty:
+    enabled: false
+    integration_key: "YOUR_PAGERDUTY_INTEGRATION_KEY"
+    severity_mapping:
+      low: "info"
+      medium: "warning"
+      high: "error"
+      critical: "critical"
+
+# Monitoring targets
+monitoring_targets:
+  # Core services
+  device_service:
+    name: "Device Service"
+    type: "service"
+    endpoint: "http://localhost:3002/health"
+    check_interval: 30
+    timeout: 10
+    enabled: true
+    tags:
+      component: "backend"
+      service: "device-management"
+      
+  ota_service:
+    name: "OTA Service"
+    type: "service"
+    endpoint: "http://localhost:3003/health"
+    check_interval: 30
+    timeout: 10
+    enabled: true
+    tags:
+      component: "backend"
+      service: "ota-updates"
+      
+  auth_service:
+    name: "Auth Service"
+    type: "service"
+    endpoint: "http://localhost:3001/health"
+    check_interval: 30
+    timeout: 10
+    enabled: true
+    tags:
+      component: "backend"
+      service: "authentication"
+      
+  # Database services
+  postgresql:
+    name: "PostgreSQL Database"
+    type: "database"
+    endpoint: "localhost:5432"
+    check_interval: 60
+    timeout: 5
+    enabled: true
+    tags:
+      component: "database"
+      service: "postgresql"
+      
+  redis:
+    name: "Redis Cache"
+    type: "cache"
+    endpoint: "localhost:6379"
+    check_interval: 60
+    timeout: 5
+    enabled: true
+    tags:
+      component: "cache"
+      service: "redis"
+      
+  # Message brokers
+  mqtt_broker:
+    name: "MQTT Broker"
+    type: "broker"
+    endpoint: "localhost:1883"
+    check_interval: 60
+    timeout: 10
+    enabled: true
+    tags:
+      component: "messaging"
+      service: "mqtt"
+      
+  # External services
+  api_gateway:
+    name: "API Gateway"
+    type: "gateway"
+    endpoint: "https://api.i4planet.com/health"
+    check_interval: 120
+    timeout: 30
+    enabled: true
+    tags:
+      component: "gateway"
+      service: "api-gateway"
+      
+  # System resources
+  system_resources:
+    name: "System Resources"
+    type: "system"
+    endpoint: "localhost"
+    check_interval: 60
+    timeout: 5
+    enabled: true
+    tags:
+      component: "system"
+      service: "host"
+
+# Alert rules
+alert_rules:
+  # Service availability alerts
+  service_down:
+    name: "Service Down"
+    description: "Service is not responding to health checks"
+    metric_query: "service_up"
+    threshold: 1
+    comparison: "<"
+    severity: "critical"
+    duration: 60
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "availability"
+      priority: "high"
+    enabled: true
+    
+  service_slow_response:
+    name: "Service Slow Response"
+    description: "Service response time is above threshold"
+    metric_query: "service_response_time"
+    threshold: 5.0
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "performance"
+      priority: "medium"
+    enabled: true
+    
+  # System resource alerts
+  high_cpu_usage:
+    name: "High CPU Usage"
+    description: "System CPU usage is above 80%"
+    metric_query: "cpu_usage_percent"
+    threshold: 80
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "system"
+      priority: "high"
+    enabled: true
+    
+  critical_cpu_usage:
+    name: "Critical CPU Usage"
+    description: "System CPU usage is above 95%"
+    metric_query: "cpu_usage_percent"
+    threshold: 95
+    comparison: ">"
+    severity: "critical"
+    duration: 120
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "system"
+      priority: "critical"
+    enabled: true
+    
+  high_memory_usage:
+    name: "High Memory Usage"
+    description: "System memory usage is above 85%"
+    metric_query: "memory_usage_percent"
+    threshold: 85
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "system"
+      priority: "high"
+    enabled: true
+    
+  critical_memory_usage:
+    name: "Critical Memory Usage"
+    description: "System memory usage is above 95%"
+    metric_query: "memory_usage_percent"
+    threshold: 95
+    comparison: ">"
+    severity: "critical"
+    duration: 120
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "system"
+      priority: "critical"
+    enabled: true
+    
+  disk_space_warning:
+    name: "Disk Space Warning"
+    description: "Disk space is below 30%"
+    metric_query: "disk_free_percent"
+    threshold: 30
+    comparison: "<"
+    severity: "medium"
+    duration: 600
+    notification_channels:
+      - "email"
+    tags:
+      category: "storage"
+      priority: "medium"
+    enabled: true
+    
+  disk_space_critical:
+    name: "Disk Space Critical"
+    description: "Disk space is below 10%"
+    metric_query: "disk_free_percent"
+    threshold: 10
+    comparison: "<"
+    severity: "critical"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "storage"
+      priority: "critical"
+    enabled: true
+    
+  # Device-specific alerts
+  device_connectivity_low:
+    name: "Low Device Connectivity"
+    description: "Device connectivity is below 95%"
+    metric_query: "device_connectivity_percent"
+    threshold: 95
+    comparison: "<"
+    severity: "medium"
+    duration: 600
+    notification_channels:
+      - "email"
+    tags:
+      category: "devices"
+      priority: "medium"
+    enabled: true
+    
+  device_connectivity_critical:
+    name: "Critical Device Connectivity"
+    description: "Device connectivity is below 90%"
+    metric_query: "device_connectivity_percent"
+    threshold: 90
+    comparison: "<"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "devices"
+      priority: "high"
+    enabled: true
+    
+  firmware_update_failure_rate:
+    name: "High Firmware Update Failure Rate"
+    description: "Firmware update failure rate is above 10%"
+    metric_query: "firmware_update_failure_rate"
+    threshold: 10
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "firmware"
+      priority: "high"
+    enabled: true
+    
+  # Deployment alerts
+  deployment_failure:
+    name: "Deployment Failure"
+    description: "Deployment has failed"
+    metric_query: "deployment_success_rate"
+    threshold: 95
+    comparison: "<"
+    severity: "high"
+    duration: 60
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "deployment"
+      priority: "high"
+    enabled: true
+    
+  deployment_slow:
+    name: "Slow Deployment"
+    description: "Deployment is taking longer than expected"
+    metric_query: "deployment_duration_seconds"
+    threshold: 3600
+    comparison: ">"
+    severity: "medium"
+    duration: 300
+    notification_channels:
+      - "email"
+    tags:
+      category: "deployment"
+      priority: "medium"
+    enabled: true
+    
+  # Database alerts
+  database_connection_failures:
+    name: "Database Connection Failures"
+    description: "Database connection failure rate is high"
+    metric_query: "database_connection_failures"
+    threshold: 5
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "database"
+      priority: "high"
+    enabled: true
+    
+  database_query_slow:
+    name: "Slow Database Queries"
+    description: "Average database query time is above threshold"
+    metric_query: "database_query_duration_seconds"
+    threshold: 1.0
+    comparison: ">"
+    severity: "medium"
+    duration: 600
+    notification_channels:
+      - "email"
+    tags:
+      category: "database"
+      priority: "medium"
+    enabled: true
+    
+  # API alerts
+  api_error_rate:
+    name: "High API Error Rate"
+    description: "API error rate is above 5%"
+    metric_query: "api_error_rate"
+    threshold: 5
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+    tags:
+      category: "api"
+      priority: "high"
+    enabled: true
+    
+  api_latency:
+    name: "High API Latency"
+    description: "API response latency is above 2 seconds"
+    metric_query: "api_latency_seconds"
+    threshold: 2.0
+    comparison: ">"
+    severity: "medium"
+    duration: 600
+    notification_channels:
+      - "email"
+    tags:
+      category: "api"
+      priority: "medium"
+    enabled: true
+    
+  # Security alerts
+  authentication_failures:
+    name: "High Authentication Failures"
+    description: "Authentication failure rate is above threshold"
+    metric_query: "authentication_failures"
+    threshold: 10
+    comparison: ">"
+    severity: "high"
+    duration: 300
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "security"
+      priority: "high"
+    enabled: true
+    
+  suspicious_activity:
+    name: "Suspicious Activity Detected"
+    description: "Suspicious activity patterns detected"
+    metric_query: "suspicious_activity_score"
+    threshold: 80
+    comparison: ">"
+    severity: "critical"
+    duration: 60
+    notification_channels:
+      - "email"
+      - "slack"
+      - "webhook"
+    tags:
+      category: "security"
+      priority: "critical"
+    enabled: true
+
+# Health check configurations
+health_checks:
+  http_checks:
+    timeout: 30
+    retries: 3
+    retry_delay: 5
+    expected_status_codes: [200, 201, 204]
+    
+  tcp_checks:
+    timeout: 10
+    retries: 3
+    retry_delay: 2
+    
+  ping_checks:
+    timeout: 5
+    retries: 3
+    retry_delay: 1
+    packet_count: 3
+    
+  custom_checks:
+    timeout: 60
+    retries: 2
+    retry_delay: 10
+
+# Metric collection settings
+metric_collection:
+  # System metrics
+  system_metrics:
+    enabled: true
+    interval: 60
+    detailed: true
+    
+  # Process metrics
+  process_metrics:
+    enabled: true
+    interval: 60
+    track_processes:
+      - "python"
+      - "node"
+      - "postgres"
+      - "redis-server"
+      - "mosquitto"
+      
+  # Network metrics
+  network_metrics:
+    enabled: true
+    interval: 60
+    interfaces: ["eth0", "wlan0"]
+    
+  # Application metrics
+  application_metrics:
+    enabled: true
+    interval: 30
+    custom_metrics: true
+    
+  # Business metrics
+  business_metrics:
+    enabled: true
+    interval: 300
+    include_device_metrics: true
+    include_deployment_metrics: true
+    include_user_metrics: true
+
+# Dashboard configuration
+dashboard:
+  enabled: true
+  port: 3000
+  auto_refresh: 30
+  themes:
+    - "default"
+    - "dark"
+    - "light"
+    
+  panels:
+    - name: "System Overview"
+      type: "overview"
+      metrics:
+        - "cpu_usage_percent"
+        - "memory_usage_percent"
+        - "disk_free_percent"
+        
+    - name: "Service Health"
+      type: "health"
+      targets:
+        - "device_service"
+        - "ota_service"
+        - "auth_service"
+        
+    - name: "Device Metrics"
+      type: "devices"
+      metrics:
+        - "device_count"
+        - "device_connectivity"
+        - "firmware_version_distribution"
+        
+    - name: "Deployment Status"
+      type: "deployment"
+      metrics:
+        - "deployment_success_rate"
+        - "deployment_duration"
+        - "deployment_failures_total"
+        
+    - name: "Alert Summary"
+      type: "alerts"
+      show_active: true
+      show_history: true
+      time_range: "24h"
+
+# Integration settings
+integrations:
+  # Prometheus
+  prometheus:
+    enabled: true
+    scrape_interval: 15
+    retention: "30d"
+    
+  # Grafana
+  grafana:
+    enabled: false
+    url: "http://localhost:3000"
+    api_key: "YOUR_GRAFANA_API_KEY"
+    
+  # ElasticSearch
+  elasticsearch:
+    enabled: false
+    url: "http://localhost:9200"
+    index_prefix: "monitoring"
+    
+  # InfluxDB
+  influxdb:
+    enabled: false
+    url: "http://localhost:8086"
+    database: "monitoring"
+    username: "admin"
+    password: "password"
+    
+  # Jaeger
+  jaeger:
+    enabled: false
+    url: "http://localhost:14268"
+    
+  # External APIs
+  external_apis:
+    weather_api:
+      enabled: false
+      url: "https://api.openweathermap.org/data/2.5/weather"
+      api_key: "YOUR_WEATHER_API_KEY"
+      
+    status_page:
+      enabled: false
+      url: "https://api.statuspage.io/v1/pages/YOUR_PAGE_ID"
+      api_key: "YOUR_STATUSPAGE_API_KEY"
+
+# Security settings
+security:
+  authentication:
+    enabled: true
+    method: "api_key"
+    api_keys:
+      - "monitoring-api-key-1"
+      - "monitoring-api-key-2"
+      
+  authorization:
+    enabled: true
+    roles:
+      admin:
+        - "view_all"
+        - "manage_alerts"
+        - "configure_system"
+      viewer:
+        - "view_metrics"
+        - "view_alerts"
+      operator:
+        - "view_all"
+        - "acknowledge_alerts"
+        - "silence_alerts"
+        
+  rate_limiting:
+    enabled: true
+    max_requests: 1000
+    window_seconds: 3600
+    
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    
+  audit_logging:
+    enabled: true
+    log_file: "audit.log"
+    include_requests: true
+    include_responses: false
+
+# Performance settings
+performance:
+  # Threading
+  max_worker_threads: 20
+  thread_pool_size: 10
+  
+  # Memory management
+  max_memory_usage: "512MB"
+  gc_interval: 300
+  
+  # Caching
+  cache_enabled: true
+  cache_type: "memory"
+  cache_size: "128MB"
+  cache_ttl: 300
+  
+  # Database optimization
+  connection_pool_size: 20
+  max_connections: 50
+  connection_timeout: 30
+  query_timeout: 60
+  
+  # Network optimization
+  max_concurrent_requests: 100
+  request_timeout: 30
+  keep_alive: true
+  
+  # Batch processing
+  batch_size: 1000
+  batch_timeout: 30
+  
+  # Compression
+  enable_compression: true
+  compression_level: 6
+
+# Maintenance settings
+maintenance:
+  # Backup
+  backup_enabled: true
+  backup_schedule: "0 2 * * *"  # Daily at 2 AM
+  backup_retention: 7
+  
+  # Cleanup
+  cleanup_enabled: true
+  cleanup_schedule: "0 3 * * *"  # Daily at 3 AM
+  
+  # Health checks
+  self_monitoring: true
+  health_check_interval: 300
+  
+  # Updates
+  auto_update: false
+  update_channel: "stable"
+  
+  # Reporting
+  daily_report: true
+  weekly_report: true
+  monthly_report: true
+  report_recipients:
+    - "admin@i4planet.com"
+    - "management@i4planet.com"

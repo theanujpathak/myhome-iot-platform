@@ -1,0 +1,82 @@
+{
+    "version": "1.0.0",
+    "build_number": 1,
+    "environments": [
+        "esp32-smart-light",
+        "esp8266-switch",
+        "arduino-uno-gateway",
+        "stm32-sensor-hub",
+        "raspberry-pi-pico"
+    ],
+    "optimization": "release",
+    "debug": false,
+    "platforms": {
+        "esp32-smart-light": {
+            "device_type": "ESP32",
+            "board_model": "ESP32-WROOM-32",
+            "capabilities": ["wifi", "bluetooth", "ota", "mqtt", "pwm", "adc"],
+            "min_compatible_version": "0.9.0",
+            "features": ["smart_light", "dimmer", "color_control", "schedule"]
+        },
+        "esp8266-switch": {
+            "device_type": "ESP8266",
+            "board_model": "NodeMCU",
+            "capabilities": ["wifi", "ota", "mqtt", "relay"],
+            "min_compatible_version": "0.9.0",
+            "features": ["smart_switch", "relay_control", "schedule"]
+        },
+        "arduino-uno-gateway": {
+            "device_type": "Arduino Uno",
+            "board_model": "Arduino Uno R3",
+            "capabilities": ["ethernet", "mqtt", "sensors", "relay"],
+            "min_compatible_version": "0.9.0",
+            "features": ["gateway", "sensor_hub", "relay_control"]
+        },
+        "stm32-sensor-hub": {
+            "device_type": "STM32",
+            "board_model": "STM32F411RE",
+            "capabilities": ["ethernet", "can", "usb", "sensors", "actuators"],
+            "min_compatible_version": "0.9.0",
+            "features": ["sensor_hub", "can_gateway", "usb_communication"]
+        },
+        "raspberry-pi-pico": {
+            "device_type": "Raspberry Pi Pico",
+            "board_model": "Pico W",
+            "capabilities": ["wifi", "bluetooth", "ota", "pio", "sensors"],
+            "min_compatible_version": "0.9.0",
+            "features": ["multi_sensor", "actuator_control", "pio_programming"]
+        }
+    },
+    "build_flags": {
+        "release": ["-O2", "-DNDEBUG"],
+        "debug": ["-Og", "-g", "-DDEBUG"]
+    },
+    "quality_gates": {
+        "max_firmware_size": {
+            "esp32": 1572864,
+            "esp8266": 1044464,
+            "arduino": 30720,
+            "stm32": 524288,
+            "pico": 2097152
+        },
+        "required_free_heap": {
+            "esp32": 50000,
+            "esp8266": 10000,
+            "arduino": 500,
+            "stm32": 10000,
+            "pico": 50000
+        }
+    },
+    "security": {
+        "enable_secure_boot": true,
+        "enable_encryption": true,
+        "code_signing": true,
+        "secure_ota": true
+    },
+    "testing": {
+        "unit_tests": true,
+        "integration_tests": true,
+        "hardware_in_loop": false,
+        "coverage_threshold": 80
+    }
+}

@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Device Emulator Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.online {
+            background: #27ae60;
+        }
+
+        .status-indicator.offline {
+            background: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .device-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .device-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .device-type {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .device-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            color: #7f8c8d;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .device-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .control-btn.power-on {
+            background: #27ae60;
+            color: white;
+        }
+
+        .control-btn.power-off {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .control-btn.secondary {
+            background: #3498db;
+            color: white;
+        }
+
+        .control-btn.warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .brightness-control {
+            margin-top: 15px;
+        }
+
+        .brightness-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            margin-top: 8px;
+        }
+
+        .brightness-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        .sensor-readings {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sensor-readings h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .readings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .reading-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+        }
+
+        .reading-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .reading-label {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .global-controls {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .global-controls h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .global-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .temperature-display {
+            font-size: 1.1em;
+            color: #e74c3c;
+        }
+
+        .humidity-display {
+            font-size: 1.1em;
+            color: #3498db;
+        }
+
+        .motion-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .motion-indicator.detected {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .motion-indicator.clear {
+            background: #27ae60;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 ESP32 Device Emulator</h1>
+            <p>Interactive IoT Device Simulation Dashboard</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator online" id="mqtt-status"></div>
+                <span>MQTT: <span id="mqtt-text">Connecting...</span></span>
+            </div>
+            <div class="status-item">
+                <span>Devices Online: <strong id="online-count">0</strong></span>
+            </div>
+            <div class="status-item">
+                <span>Total Devices: <strong id="total-count">0</strong></span>
+            </div>
+            <div class="status-item">
+                <span>Last Updated: <span id="last-update">Never</span></span>
+            </div>
+        </div>
+
+        <div class="global-controls">
+            <h3>🎛️ Global Controls</h3>
+            <div class="global-buttons">
+                <button class="control-btn secondary" onclick="simulateAllSensors()">📊 Simulate All Sensors</button>
+                <button class="control-btn warning" onclick="toggleAllDevices()">⚡ Toggle All Power</button>
+                <button class="control-btn secondary" onclick="randomizeStates()">🎲 Randomize States</button>
+                <button class="control-btn secondary" onclick="resetAllDevices()">🔄 Reset All</button>
+            </div>
+        </div>
+
+        <div class="sensor-readings">
+            <h3>📊 Live Sensor Readings</h3>
+            <div class="readings-grid" id="sensor-grid">
+                <!-- Sensor readings will be populated here -->
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>📈 Temperature Trends</h3>
+            <canvas id="temperatureChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="devices-grid" id="devices-container">
+            <!-- Device cards will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let devices = {};
+        let temperatureChart;
+        let temperatureData = [];
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+            temperatureChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 15,
+                            max: 35
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enhanced socket event handlers with reconnection
+        let isConnected = false;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        let pollingInterval;
+
+        socket.on('connect', function() {
+            console.log('✅ Connected to emulator WebSocket');
+            updateMQTTStatus(true);
+            isConnected = true;
+            reconnectAttempts = 0;
+            
+            // Stop polling if it was active
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        });
+
+        socket.on('disconnect', function() {
+            console.log('❌ Disconnected from emulator WebSocket');
+            updateMQTTStatus(false);
+            isConnected = false;
+            
+            // Start polling fallback
+            startPollingFallback();
+        });
+
+        socket.on('connect_error', function(error) {
+            console.error('WebSocket connection error:', error);
+            updateMQTTStatus(false);
+            startPollingFallback();
+        });
+
+        socket.on('device_list', function(deviceList) {
+            devices = {};
+            deviceList.forEach(device => {
+                devices[device.device_id] = device;
+            });
+            updateDeviceDisplay();
+            updateSensorReadings();
+            updateChart();
+        });
+
+        socket.on('device_state_changed', function(data) {
+            devices[data.device_id] = data.state;
+            updateDeviceDisplay();
+            updateSensorReadings();
+            updateChart();
+        });
+
+        socket.on('devices_updated', function(deviceList) {
+            deviceList.forEach(device => {
+                devices[device.device_id] = device;
+            });
+            updateDeviceDisplay();
+            updateSensorReadings();
+            updateChart();
+        });
+
+        // Polling fallback when WebSocket is disconnected
+        function startPollingFallback() {
+            if (pollingInterval) return; // Already polling
+            
+            console.log('🔄 Starting polling fallback (every 3 seconds)');
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/devices');
+                    if (response.ok) {
+                        const deviceList = await response.json();
+                        
+                        // Update devices
+                        devices = {};
+                        deviceList.forEach(device => {
+                            devices[device.device_id] = device;
+                        });
+                        
+                        updateDeviceDisplay();
+                        updateSensorReadings();
+                        updateChart();
+                        
+                        // Update status to show polling is active
+                        const statusText = document.getElementById('mqtt-text');
+                        if (statusText && !isConnected) {
+                            statusText.textContent = 'Polling (WebSocket down)';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        function updateMQTTStatus(connected) {
+            const statusIndicator = document.getElementById('mqtt-status');
+            const statusText = document.getElementById('mqtt-text');
+            
+            if (connected) {
+                statusIndicator.className = 'status-indicator online';
+                statusText.textContent = 'Connected';
+            } else {
+                statusIndicator.className = 'status-indicator offline';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+
+        function updateDeviceDisplay() {
+            const container = document.getElementById('devices-container');
+            const onlineCount = document.getElementById('online-count');
+            const totalCount = document.getElementById('total-count');
+            const lastUpdate = document.getElementById('last-update');
+            
+            let onlineDevices = 0;
+            let totalDevices = Object.keys(devices).length;
+            
+            container.innerHTML = '';
+            
+            Object.values(devices).forEach(device => {
+                if (device.is_online) onlineDevices++;
+                
+                const deviceCard = createDeviceCard(device);
+                container.appendChild(deviceCard);
+            });
+            
+            onlineCount.textContent = onlineDevices;
+            totalCount.textContent = totalDevices;
+            lastUpdate.textContent = new Date().toLocaleTimeString();
+        }
+
+        function createDeviceCard(device) {
+            const card = document.createElement('div');
+            card.className = 'device-card';
+            card.innerHTML = `
+                <div class="device-header">
+                    <div class="device-name">${device.device_name}</div>
+                    <div class="device-type">${device.device_type}</div>
+                </div>
+                
+                <div class="device-status">
+                    <div class="status-indicator ${device.is_online ? 'online' : 'offline'}"></div>
+                    <span>${device.is_online ? 'Online' : 'Offline'}</span>
+                </div>
+                
+                <div class="device-info">
+                    <div class="info-item">
+                        <div class="info-label">Device ID</div>
+                        <div class="info-value">${device.device_id}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">IP Address</div>
+                        <div class="info-value">${device.ip_address}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">MAC Address</div>
+                        <div class="info-value">${device.mac_address}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Battery</div>
+                        <div class="info-value">${device.battery_level}%</div>
+                    </div>
+                    ${device.device_type === 'Temperature Sensor' ? `
+                        <div class="info-item">
+                            <div class="info-label">Temperature</div>
+                            <div class="info-value temperature-display">${device.temperature.toFixed(1)}°C</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Humidity</div>
+                            <div class="info-value humidity-display">${device.humidity.toFixed(1)}%</div>
+                        </div>
+                    ` : ''}
+                    ${device.device_type === 'Motion Sensor' ? `
+                        <div class="info-item">
+                            <div class="info-label">Motion</div>
+                            <div class="info-value">
+                                <span class="motion-indicator ${device.motion_detected ? 'detected' : 'clear'}">
+                                    ${device.motion_detected ? '🔴 Detected' : '🟢 Clear'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${device.device_type === 'Door Sensor' ? `
+                        <div class="info-item">
+                            <div class="info-label">Door Status</div>
+                            <div class="info-value">
+                                <span class="motion-indicator ${device.door_open ? 'detected' : 'clear'}">
+                                    ${device.door_open ? '🔓 Open' : '🔒 Closed'}
+                                </span>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="device-controls">
+                    ${device.device_type === 'Smart Light' || device.device_type === 'Smart Switch' ? `
+                        <button class="control-btn ${device.power_state ? 'power-on' : 'power-off'}" 
+                                onclick="togglePower('${device.device_id}')">
+                            ${device.power_state ? '🔆 Turn Off' : '🔅 Turn On'}
+                        </button>
+                    ` : ''}
+                    
+                    ${device.device_type.includes('Sensor') ? `
+                        <button class="control-btn secondary" onclick="simulateSensor('${device.device_id}')">
+                            📊 Simulate Reading
+                        </button>
+                    ` : ''}
+                    
+                    <button class="control-btn warning" onclick="toggleOnline('${device.device_id}')">
+                        ${device.is_online ? '📡 Go Offline' : '🔌 Go Online'}
+                    </button>
+                </div>
+                
+                ${device.supports_dimming && device.power_state ? `
+                    <div class="brightness-control">
+                        <div class="info-label">Brightness: ${device.brightness}%</div>
+                        <input type="range" class="brightness-slider" min="0" max="100" 
+                               value="${device.brightness}" 
+                               onchange="setBrightness('${device.device_id}', this.value)">
+                    </div>
+                ` : ''}
+            `;
+            return card;
+        }
+
+        function updateSensorReadings() {
+            const sensorGrid = document.getElementById('sensor-grid');
+            sensorGrid.innerHTML = '';
+            
+            Object.values(devices).forEach(device => {
+                if (device.device_type === 'Temperature Sensor') {
+                    const tempReading = document.createElement('div');
+                    tempReading.className = 'reading-item';
+                    tempReading.innerHTML = `
+                        <div class="reading-value">${device.temperature.toFixed(1)}°C</div>
+                        <div class="reading-label">${device.device_name} - Temperature</div>
+                    `;
+                    sensorGrid.appendChild(tempReading);
+                    
+                    const humReading = document.createElement('div');
+                    humReading.className = 'reading-item';
+                    humReading.innerHTML = `
+                        <div class="reading-value">${device.humidity.toFixed(1)}%</div>
+                        <div class="reading-label">${device.device_name} - Humidity</div>
+                    `;
+                    sensorGrid.appendChild(humReading);
+                }
+            });
+        }
+
+        function updateChart() {
+            const now = new Date();
+            const timeLabel = now.toLocaleTimeString();
+            
+            // Add new data point
+            if (temperatureChart.data.labels.length > 20) {
+                temperatureChart.data.labels.shift();
+                temperatureChart.data.datasets.forEach(dataset => {
+                    dataset.data.shift();
+                });
+            }
+            
+            temperatureChart.data.labels.push(timeLabel);
+            
+            // Update datasets for temperature sensors
+            Object.values(devices).forEach(device => {
+                if (device.device_type === 'Temperature Sensor') {
+                    let dataset = temperatureChart.data.datasets.find(d => d.label === device.device_name);
+                    if (!dataset) {
+                        dataset = {
+                            label: device.device_name,
+                            data: [],
+                            borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                            backgroundColor: `hsla(${Math.random() * 360}, 70%, 50%, 0.1)`,
+                            tension: 0.1
+                        };
+                        temperatureChart.data.datasets.push(dataset);
+                    }
+                    dataset.data.push(device.temperature);
+                }
+            });
+            
+            temperatureChart.update('none');
+        }
+
+        // Control functions
+        function togglePower(deviceId) {
+            fetch(`/api/devices/${deviceId}/control`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    power_state: !devices[deviceId].power_state
+                })
+            });
+        }
+
+        function setBrightness(deviceId, brightness) {
+            fetch(`/api/devices/${deviceId}/control`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    brightness: parseInt(brightness)
+                })
+            });
+        }
+
+        function simulateSensor(deviceId) {
+            if (isConnected && socket) {
+                socket.emit('simulate_sensor_reading', {device_id: deviceId});
+            } else {
+                // Fallback: Trigger a data refresh
+                console.log('WebSocket unavailable, refreshing data...');
+                fetch('/api/devices')
+                    .then(response => response.json())
+                    .then(deviceList => {
+                        devices = {};
+                        deviceList.forEach(device => {
+                            devices[device.device_id] = device;
+                        });
+                        updateDeviceDisplay();
+                        updateSensorReadings();
+                        updateChart();
+                    })
+                    .catch(error => console.error('Failed to refresh data:', error));
+            }
+        }
+
+        function toggleOnline(deviceId) {
+            if (isConnected && socket) {
+                socket.emit('toggle_device_online', {device_id: deviceId});
+            } else {
+                // Fallback: Simulate toggle locally
+                if (devices[deviceId]) {
+                    devices[deviceId].is_online = !devices[deviceId].is_online;
+                    updateDeviceDisplay();
+                }
+            }
+        }
+
+        function simulateAllSensors() {
+            Object.keys(devices).forEach(deviceId => {
+                if (devices[deviceId].device_type.includes('Sensor')) {
+                    setTimeout(() => simulateSensor(deviceId), Math.random() * 1000);
+                }
+            });
+        }
+
+        function toggleAllDevices() {
+            Object.keys(devices).forEach(deviceId => {
+                if (devices[deviceId].device_type === 'Smart Light' || devices[deviceId].device_type === 'Smart Switch') {
+                    setTimeout(() => togglePower(deviceId), Math.random() * 500);
+                }
+            });
+        }
+
+        function randomizeStates() {
+            Object.keys(devices).forEach(deviceId => {
+                const device = devices[deviceId];
+                if (device.device_type === 'Smart Light' || device.device_type === 'Smart Switch') {
+                    setTimeout(() => {
+                        fetch(`/api/devices/${deviceId}/control`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                power_state: Math.random() > 0.5,
+                                brightness: Math.floor(Math.random() * 101)
+                            })
+                        });
+                    }, Math.random() * 1000);
+                }
+            });
+        }
+
+        function resetAllDevices() {
+            Object.keys(devices).forEach(deviceId => {
+                setTimeout(() => {
+                    fetch(`/api/devices/${deviceId}/control`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            power_state: false,
+                            brightness: 100
+                        })
+                    });
+                }, Math.random() * 500);
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+        });
+    </script>
+</body>
+</html>

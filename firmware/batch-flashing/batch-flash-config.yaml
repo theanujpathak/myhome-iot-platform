@@ -1,0 +1,409 @@
+# Batch Firmware Flashing Configuration
+# Configuration for batch firmware flashing system
+
+# Device interfaces configuration
+interfaces:
+  serial:
+    type: "serial"
+    baudrate: 115200
+    flash_baudrate: 921600
+    timeout: 30
+    retry_delay: 2
+    
+  network:
+    type: "network"
+    timeout: 30
+    port: 80
+    retry_delay: 5
+    
+  usb:
+    type: "usb"
+    timeout: 60
+    retry_delay: 3
+
+# Flash operation settings
+flash_settings:
+  # Maximum concurrent flash operations
+  max_concurrent: 10
+  
+  # Overall operation timeout (seconds)
+  timeout: 300
+  
+  # Maximum retry attempts per device
+  max_retries: 3
+  
+  # Delay between retries (seconds)
+  retry_delay: 5
+  
+  # Verify firmware after flashing
+  verify_after_flash: true
+  
+  # Create backup before flashing
+  backup_before_flash: true
+  
+  # Rollback on verification failure
+  rollback_on_verification_failure: true
+  
+  # Enable parallel verification
+  parallel_verification: true
+
+# Quality gates and validation
+quality_gates:
+  # Minimum success rate to consider batch successful
+  min_success_rate: 80
+  
+  # Maximum failure rate before stopping batch
+  max_failure_rate: 20
+  
+  # Require verification for all devices
+  require_verification: true
+  
+  # Maximum acceptable flash time per device (seconds)
+  max_flash_time: 120
+  
+  # Minimum acceptable flash time (to detect issues)
+  min_flash_time: 5
+  
+  # Stop batch if failure rate exceeds threshold
+  stop_on_failure_threshold: true
+  
+  # Enable automatic rollback on batch failure
+  auto_rollback_on_failure: false
+
+# Device type specific settings
+device_types:
+  esp32:
+    interface: "serial"
+    flash_baudrate: 921600
+    flash_mode: "dio"
+    flash_freq: "80m"
+    flash_size: "4MB"
+    chip: "esp32"
+    flash_address: "0x10000"
+    bootloader_address: "0x1000"
+    partition_address: "0x8000"
+    max_firmware_size: 3145728  # 3MB
+    
+  esp8266:
+    interface: "serial"
+    flash_baudrate: 460800
+    flash_mode: "dio"
+    flash_freq: "80m"
+    flash_size: "4MB"
+    chip: "esp8266"
+    flash_address: "0x0"
+    max_firmware_size: 1048576  # 1MB
+    
+  arduino:
+    interface: "serial"
+    flash_baudrate: 57600
+    programmer: "arduino"
+    mcu: "atmega328p"
+    max_firmware_size: 30720  # 30KB
+    
+  stm32:
+    interface: "serial"
+    flash_baudrate: 115200
+    programmer: "stlink"
+    mcu: "stm32f411re"
+    max_firmware_size: 524288  # 512KB
+    
+  pico:
+    interface: "usb"
+    flash_mode: "uf2"
+    max_firmware_size: 2097152  # 2MB
+
+# Batch processing strategies
+strategies:
+  parallel:
+    description: "Flash all devices simultaneously"
+    max_concurrent: 10
+    retry_failed_immediately: false
+    
+  sequential:
+    description: "Flash devices one by one"
+    max_concurrent: 1
+    stop_on_first_failure: false
+    
+  gradual:
+    description: "Flash in small batches with validation"
+    batch_size: 5
+    validate_between_batches: true
+    success_threshold: 90
+    
+  canary:
+    description: "Test with small group first"
+    canary_size: 2
+    canary_success_threshold: 100
+    rollout_delay: 30
+
+# Firmware validation settings
+firmware_validation:
+  # Validate firmware file before flashing
+  validate_before_flash: true
+  
+  # Check file size limits
+  check_file_size: true
+  
+  # Verify firmware checksum
+  verify_checksum: true
+  
+  # Validate firmware signature
+  validate_signature: false
+  
+  # Check firmware compatibility
+  check_compatibility: true
+  
+  # Scan for security issues
+  security_scan: true
+  
+  # Maximum firmware age (days)
+  max_firmware_age: 30
+
+# Backup and rollback settings
+backup_settings:
+  # Enable automatic backup
+  auto_backup: true
+  
+  # Backup storage location
+  backup_directory: "./backups"
+  
+  # Maximum backup retention (days)
+  retention_days: 30
+  
+  # Compress backups
+  compress_backups: true
+  
+  # Verify backup integrity
+  verify_backup: true
+  
+  # Enable quick rollback
+  quick_rollback: true
+
+# Monitoring and logging
+monitoring:
+  # Enable detailed logging
+  detailed_logging: true
+  
+  # Log file location
+  log_file: "batch-flash.log"
+  
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  log_level: "INFO"
+  
+  # Enable performance monitoring
+  performance_monitoring: true
+  
+  # Monitor system resources
+  resource_monitoring: true
+  
+  # Enable real-time notifications
+  real_time_notifications: true
+
+# Notification settings
+notifications:
+  # Enable email notifications
+  email:
+    enabled: false
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
+    username: "notifications@company.com"
+    password: "password"
+    recipients:
+      - "firmware-team@company.com"
+      - "qa-team@company.com"
+    
+  # Enable Slack notifications
+  slack:
+    enabled: false
+    webhook_url: "https://hooks.slack.com/services/..."
+    channel: "#firmware-flashing"
+    
+  # Enable webhook notifications
+  webhook:
+    enabled: false
+    url: "https://api.company.com/webhooks/firmware-flash"
+    headers:
+      Authorization: "Bearer token"
+    
+  # Enable SMS notifications (for critical failures)
+  sms:
+    enabled: false
+    service: "twilio"
+    account_sid: "your_account_sid"
+    auth_token: "your_auth_token"
+    recipients:
+      - "+1234567890"
+
+# Security settings
+security:
+  # Enable secure connections
+  secure_connections: true
+  
+  # Verify device certificates
+  verify_device_certificates: false
+  
+  # Enable audit logging
+  audit_logging: true
+  
+  # Restrict access by IP
+  ip_restrictions: []
+  
+  # Enable API key authentication
+  api_key_auth: false
+  
+  # Enable rate limiting
+  rate_limiting: true
+  
+  # Maximum API calls per minute
+  max_api_calls: 100
+
+# Performance optimization
+performance:
+  # Enable connection pooling
+  connection_pooling: true
+  
+  # Maximum connections per interface
+  max_connections_per_interface: 20
+  
+  # Enable caching
+  enable_caching: true
+  
+  # Cache timeout (seconds)
+  cache_timeout: 300
+  
+  # Enable compression
+  enable_compression: true
+  
+  # Optimize for SSD storage
+  optimize_for_ssd: true
+  
+  # Enable parallel processing
+  parallel_processing: true
+  
+  # Worker thread pool size
+  worker_thread_pool_size: 20
+
+# Error handling and recovery
+error_handling:
+  # Enable automatic retry
+  auto_retry: true
+  
+  # Exponential backoff for retries
+  exponential_backoff: true
+  
+  # Maximum retry attempts
+  max_retry_attempts: 3
+  
+  # Retry delay (seconds)
+  retry_delay: 5
+  
+  # Enable circuit breaker
+  circuit_breaker: true
+  
+  # Circuit breaker threshold
+  circuit_breaker_threshold: 5
+  
+  # Circuit breaker timeout (seconds)
+  circuit_breaker_timeout: 60
+  
+  # Enable graceful degradation
+  graceful_degradation: true
+
+# Reporting and analytics
+reporting:
+  # Enable detailed reports
+  detailed_reports: true
+  
+  # Report format (json, html, csv)
+  report_format: "json"
+  
+  # Report output directory
+  report_directory: "./reports"
+  
+  # Enable real-time dashboard
+  real_time_dashboard: false
+  
+  # Dashboard port
+  dashboard_port: 8080
+  
+  # Enable metrics collection
+  metrics_collection: true
+  
+  # Metrics endpoint
+  metrics_endpoint: "/metrics"
+  
+  # Enable historical analysis
+  historical_analysis: true
+
+# Testing and debugging
+testing:
+  # Enable test mode
+  test_mode: false
+  
+  # Skip actual flashing in test mode
+  skip_flashing: false
+  
+  # Enable dry run mode
+  dry_run: false
+  
+  # Enable debug logging
+  debug_logging: false
+  
+  # Enable verbose output
+  verbose_output: false
+  
+  # Enable mock devices
+  mock_devices: false
+  
+  # Mock device count
+  mock_device_count: 5
+
+# Integration settings
+integration:
+  # Device service URL
+  device_service_url: "http://localhost:3002"
+  
+  # OTA service URL
+  ota_service_url: "http://localhost:3004"
+  
+  # Firmware registry URL
+  firmware_registry_url: "http://localhost:3005"
+  
+  # Enable service discovery
+  service_discovery: false
+  
+  # API timeout (seconds)
+  api_timeout: 30
+  
+  # Enable authentication
+  api_authentication: true
+  
+  # API key
+  api_key: "your_api_key"
+
+# Cleanup and maintenance
+maintenance:
+  # Enable automatic cleanup
+  auto_cleanup: true
+  
+  # Cleanup interval (hours)
+  cleanup_interval: 24
+  
+  # Maximum log file size (MB)
+  max_log_file_size: 100
+  
+  # Log file retention (days)
+  log_retention_days: 7
+  
+  # Enable database optimization
+  database_optimization: true
+  
+  # Optimization interval (hours)
+  optimization_interval: 168  # 1 week
+  
+  # Enable health checks
+  health_checks: true
+  
+  # Health check interval (minutes)
+  health_check_interval: 5

@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav {
+            background: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: #333;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .trend-up {
+            color: #e74c3c;
+        }
+
+        .trend-down {
+            color: #27ae60;
+        }
+
+        .trend-stable {
+            color: #f39c12;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-up {
+            background-color: #27ae60;
+        }
+
+        .status-down {
+            background-color: #e74c3c;
+        }
+
+        .status-warning {
+            background-color: #f39c12;
+        }
+
+        .alert-card {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .alert-card.warning {
+            border-left-color: #f39c12;
+        }
+
+        .alert-card.info {
+            border-left-color: #3498db;
+        }
+
+        .alert-card.success {
+            border-left-color: #27ae60;
+        }
+
+        .alert-severity {
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .severity-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .severity-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .severity-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .severity-critical {
+            background-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th, .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn.btn-success {
+            background: #28a745;
+        }
+
+        .btn.btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn.btn-danger {
+            background: #dc3545;
+        }
+
+        .btn.btn-secondary {
+            background: #6c757d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #ffc107, #fd7e14);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #dc3545, #e83e8c);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .log-container {
+            background: #1a1a1a;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .log-timestamp {
+            color: #6272a4;
+        }
+
+        .log-level {
+            font-weight: bold;
+            margin: 0 0.5rem;
+        }
+
+        .log-level.info {
+            color: #8be9fd;
+        }
+
+        .log-level.warning {
+            color: #f1fa8c;
+        }
+
+        .log-level.error {
+            color: #ff5555;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .auto-refresh label {
+            font-weight: 500;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .time-range {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-range select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Monitoring Dashboard</h1>
+            <p>Real-time monitoring and alerting for IoT device platform</p>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="container">
+            <ul>
+                <li><a href="#overview" class="nav-link active">Overview</a></li>
+                <li><a href="#alerts" class="nav-link">Alerts</a></li>
+                <li><a href="#metrics" class="nav-link">Metrics</a></li>
+                <li><a href="#health" class="nav-link">Health Checks</a></li>
+                <li><a href="#targets" class="nav-link">Targets</a></li>
+                <li><a href="#logs" class="nav-link">Logs</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="auto-refresh">
+                <label for="auto-refresh-toggle">Auto Refresh:</label>
+                <input type="checkbox" id="auto-refresh-toggle" checked>
+                <span id="refresh-interval">30s</span>
+            </div>
+            <div class="time-range">
+                <label for="time-range-select">Time Range:</label>
+                <select id="time-range-select">
+                    <option value="1">Last 1 hour</option>
+                    <option value="6">Last 6 hours</option>
+                    <option value="24" selected>Last 24 hours</option>
+                    <option value="168">Last 7 days</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn" onclick="refreshAll()">Refresh All</button>
+                <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+            </div>
+        </div>
+
+        <!-- Overview Section -->
+        <div id="overview" class="section">
+            <h2>System Overview</h2>
+            
+            <div class="grid">
+                <div class="card metric-card">
+                    <div class="metric-value" id="system-health">Healthy</div>
+                    <div class="metric-label">System Health</div>
+                    <div class="metric-trend">
+                        <span id="health-trend" class="trend-stable">●</span>
+                        <span>Stable</span>
+                    </div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="active-alerts">0</div>
+                    <div class="metric-label">Active Alerts</div>
+                    <div class="metric-trend">
+                        <span id="alerts-trend" class="trend-stable">●</span>
+                        <span>No change</span>
+                    </div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="services-up">0/0</div>
+                    <div class="metric-label">Services Up</div>
+                    <div class="metric-trend">
+                        <span id="services-trend" class="trend-stable">●</span>
+                        <span>All operational</span>
+                    </div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="uptime">99.9%</div>
+                    <div class="metric-label">Uptime (24h)</div>
+                    <div class="metric-trend">
+                        <span id="uptime-trend" class="trend-stable">●</span>
+                        <span>Excellent</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>System Resources</h3>
+                    <div class="resource-metrics">
+                        <div class="resource-item">
+                            <label>CPU Usage</label>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpu-progress" style="width: 0%"></div>
+                            </div>
+                            <span id="cpu-value">0%</span>
+                        </div>
+                        
+                        <div class="resource-item">
+                            <label>Memory Usage</label>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memory-progress" style="width: 0%"></div>
+                            </div>
+                            <span id="memory-value">0%</span>
+                        </div>
+                        
+                        <div class="resource-item">
+                            <label>Disk Usage</label>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="disk-progress" style="width: 0%"></div>
+                            </div>
+                            <span id="disk-value">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Recent Alerts</h3>
+                    <div id="recent-alerts">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>Loading alerts...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="alerts" class="section" style="display: none;">
+            <h2>Alerts Management</h2>
+            
+            <div class="card">
+                <h3>Active Alerts</h3>
+                <div class="controls">
+                    <div>
+                        <select id="alert-severity-filter">
+                            <option value="">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="filterAlerts()">Filter</button>
+                    </div>
+                    <div>
+                        <button class="btn btn-warning" onclick="acknowledgeAllAlerts()">Acknowledge All</button>
+                        <button class="btn btn-secondary" onclick="refreshAlerts()">Refresh</button>
+                    </div>
+                </div>
+                <div id="alerts-list">
+                    <div class="loading active">
+                        <div class="spinner"></div>
+                        <p>Loading alerts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Section -->
+        <div id="metrics" class="section" style="display: none;">
+            <h2>System Metrics</h2>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>CPU Usage</h3>
+                    <div class="chart-container">
+                        <canvas id="cpu-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Memory Usage</h3>
+                    <div class="chart-container">
+                        <canvas id="memory-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Disk Usage</h3>
+                    <div class="chart-container">
+                        <canvas id="disk-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Network Traffic</h3>
+                    <div class="chart-container">
+                        <canvas id="network-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Checks Section -->
+        <div id="health" class="section" style="display: none;">
+            <h2>Health Checks</h2>
+            
+            <div class="card">
+                <h3>Service Health Status</h3>
+                <button class="btn" onclick="runHealthChecks()">Run All Health Checks</button>
+                <button class="btn btn-secondary" onclick="refreshHealthChecks()">Refresh</button>
+                <div id="health-checks-list">
+                    <div class="loading active">
+                        <div class="spinner"></div>
+                        <p>Loading health checks...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Targets Section -->
+        <div id="targets" class="section" style="display: none;">
+            <h2>Monitoring Targets</h2>
+            
+            <div class="card">
+                <h3>Configured Targets</h3>
+                <button class="btn btn-secondary" onclick="refreshTargets()">Refresh</button>
+                <div id="targets-list">
+                    <div class="loading active">
+                        <div class="spinner"></div>
+                        <p>Loading targets...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Section -->
+        <div id="logs" class="section" style="display: none;">
+            <h2>System Logs</h2>
+            
+            <div class="card">
+                <h3>Recent Log Entries</h3>
+                <div class="controls">
+                    <div>
+                        <select id="log-level-filter">
+                            <option value="">All Levels</option>
+                            <option value="ERROR">Error</option>
+                            <option value="WARNING">Warning</option>
+                            <option value="INFO">Info</option>
+                            <option value="DEBUG">Debug</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="filterLogs()">Filter</button>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" onclick="clearLogs()">Clear</button>
+                        <button class="btn btn-secondary" onclick="refreshLogs()">Refresh</button>
+                    </div>
+                </div>
+                <div class="log-container" id="logs-container">
+                    <div class="loading active">
+                        <div class="spinner"></div>
+                        <p>Loading logs...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:5002/api';
+        const API_KEY = 'monitoring-api-key-1';
+        
+        // Auto-refresh configuration
+        let autoRefreshEnabled = true;
+        let refreshInterval = 30000; // 30 seconds
+        let refreshTimer;
+        
+        // Current section
+        let currentSection = 'overview';
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            initializeControls();
+            loadDashboard();
+            startAutoRefresh();
+        });
+
+        // Navigation handling
+        function initializeNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetSection = this.getAttribute('href').substring(1);
+                    showSection(targetSection);
+                });
+            });
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[href="#${sectionId}"]`).classList.add('active');
+            
+            currentSection = sectionId;
+            
+            // Load section-specific data
+            loadSectionData(sectionId);
+        }
+
+        function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'overview':
+                    loadOverview();
+                    break;
+                case 'alerts':
+                    loadAlerts();
+                    break;
+                case 'metrics':
+                    loadMetrics();
+                    break;
+                case 'health':
+                    loadHealthChecks();
+                    break;
+                case 'targets':
+                    loadTargets();
+                    break;
+                case 'logs':
+                    loadLogs();
+                    break;
+            }
+        }
+
+        // Controls handling
+        function initializeControls() {
+            // Auto-refresh toggle
+            document.getElementById('auto-refresh-toggle').addEventListener('change', function(e) {
+                autoRefreshEnabled = e.target.checked;
+                if (autoRefreshEnabled) {
+                    startAutoRefresh();
+                } else {
+                    stopAutoRefresh();
+                }
+            });
+            
+            // Time range selector
+            document.getElementById('time-range-select').addEventListener('change', function(e) {
+                refreshAll();
+            });
+        }
+
+        // API Helper functions
+        function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': API_KEY
+                }
+            };
+            
+            return fetch(url, { ...defaultOptions, ...options })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                });
+        }
+
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            
+            document.body.insertBefore(alert, document.body.firstChild);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Dashboard loading functions
+        function loadDashboard() {
+            loadOverview();
+        }
+
+        function loadOverview() {
+            Promise.all([
+                apiRequest('/status'),
+                apiRequest('/metrics'),
+                apiRequest('/alerts?status=active'),
+                apiRequest('/targets')
+            ]).then(([statusResponse, metricsResponse, alertsResponse, targetsResponse]) => {
+                updateSystemStatus(statusResponse.status);
+                updateSystemMetrics(metricsResponse.metrics);
+                updateRecentAlerts(alertsResponse.alerts);
+                updateServicesStatus(targetsResponse.targets);
+            }).catch(error => {
+                console.error('Error loading overview:', error);
+                showAlert('Error loading dashboard data', 'error');
+            });
+        }
+
+        function updateSystemStatus(status) {
+            document.getElementById('system-health').textContent = status.system_health;
+            document.getElementById('active-alerts').textContent = status.active_alerts;
+            
+            // Update health trend
+            const healthTrend = document.getElementById('health-trend');
+            if (status.system_health === 'healthy') {
+                healthTrend.className = 'trend-stable';
+                healthTrend.textContent = '●';
+            } else {
+                healthTrend.className = 'trend-up';
+                healthTrend.textContent = '▲';
+            }
+        }
+
+        function updateSystemMetrics(metrics) {
+            // Update CPU
+            const cpuValue = metrics.cpu_usage || 0;
+            document.getElementById('cpu-value').textContent = `${cpuValue.toFixed(1)}%`;
+            document.getElementById('cpu-progress').style.width = `${cpuValue}%`;
+            
+            if (cpuValue > 80) {
+                document.getElementById('cpu-progress').className = 'progress-fill danger';
+            } else if (cpuValue > 60) {
+                document.getElementById('cpu-progress').className = 'progress-fill warning';
+            } else {
+                document.getElementById('cpu-progress').className = 'progress-fill';
+            }
+            
+            // Update Memory
+            const memoryValue = metrics.memory_usage || 0;
+            document.getElementById('memory-value').textContent = `${memoryValue.toFixed(1)}%`;
+            document.getElementById('memory-progress').style.width = `${memoryValue}%`;
+            
+            if (memoryValue > 85) {
+                document.getElementById('memory-progress').className = 'progress-fill danger';
+            } else if (memoryValue > 70) {
+                document.getElementById('memory-progress').className = 'progress-fill warning';
+            } else {
+                document.getElementById('memory-progress').className = 'progress-fill';
+            }
+            
+            // Update Disk
+            const diskValue = 100 - (metrics.disk_free || 100);
+            document.getElementById('disk-value').textContent = `${diskValue.toFixed(1)}%`;
+            document.getElementById('disk-progress').style.width = `${diskValue}%`;
+            
+            if (diskValue > 90) {
+                document.getElementById('disk-progress').className = 'progress-fill danger';
+            } else if (diskValue > 80) {
+                document.getElementById('disk-progress').className = 'progress-fill warning';
+            } else {
+                document.getElementById('disk-progress').className = 'progress-fill';
+            }
+        }
+
+        function updateRecentAlerts(alerts) {
+            const container = document.getElementById('recent-alerts');
+            container.innerHTML = '';
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p>No active alerts</p>';
+                return;
+            }
+            
+            const recent = alerts.slice(0, 3);
+            recent.forEach(alert => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert-card ${alert.severity}`;
+                alertDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${alert.name}</strong>
+                            <span class="alert-severity severity-${alert.severity}">${alert.severity}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning" onclick="acknowledgeAlert('${alert.alert_id}')">Ack</button>
+                        </div>
+                    </div>
+                    <p>${alert.message}</p>
+                    <small>Triggered: ${new Date(alert.triggered_at).toLocaleString()}</small>
+                `;
+                container.appendChild(alertDiv);
+            });
+        }
+
+        function updateServicesStatus(targets) {
+            const services = targets.filter(t => t.type === 'service');
+            const upCount = services.filter(s => s.status === 'up').length;
+            const totalCount = services.length;
+            
+            document.getElementById('services-up').textContent = `${upCount}/${totalCount}`;
+            
+            const servicesTrend = document.getElementById('services-trend');
+            if (upCount === totalCount) {
+                servicesTrend.className = 'trend-stable';
+                servicesTrend.textContent = '●';
+            } else {
+                servicesTrend.className = 'trend-up';
+                servicesTrend.textContent = '▲';
+            }
+        }
+
+        function loadAlerts() {
+            apiRequest('/alerts?status=active')
+                .then(response => {
+                    updateAlertsList(response.alerts);
+                })
+                .catch(error => {
+                    console.error('Error loading alerts:', error);
+                    showAlert('Error loading alerts', 'error');
+                });
+        }
+
+        function updateAlertsList(alerts) {
+            const container = document.getElementById('alerts-list');
+            container.innerHTML = '';
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p>No active alerts</p>';
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'table';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Rule</th>
+                        <th>Severity</th>
+                        <th>Current Value</th>
+                        <th>Threshold</th>
+                        <th>Triggered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${alerts.map(alert => `
+                        <tr>
+                            <td>${alert.name}</td>
+                            <td><span class="alert-severity severity-${alert.severity}">${alert.severity}</span></td>
+                            <td>${alert.value}</td>
+                            <td>${alert.threshold}</td>
+                            <td>${new Date(alert.triggered_at).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="acknowledgeAlert('${alert.alert_id}')">Acknowledge</button>
+                                <button class="btn btn-success" onclick="resolveAlert('${alert.alert_id}')">Resolve</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            
+            container.appendChild(table);
+        }
+
+        function loadHealthChecks() {
+            apiRequest('/health-checks')
+                .then(response => {
+                    updateHealthChecksList(response.health_checks);
+                })
+                .catch(error => {
+                    console.error('Error loading health checks:', error);
+                    showAlert('Error loading health checks', 'error');
+                });
+        }
+
+        function updateHealthChecksList(healthChecks) {
+            const container = document.getElementById('health-checks-list');
+            container.innerHTML = '';
+            
+            if (healthChecks.length === 0) {
+                container.innerHTML = '<p>No health checks configured</p>';
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'table';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Response Time</th>
+                        <th>Last Check</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${healthChecks.map(check => {
+                        const statusClass = check.status === 'success' ? 'status-up' : 'status-down';
+                        return `
+                            <tr>
+                                <td>
+                                    <span class="status-indicator ${statusClass}"></span>
+                                    ${check.target_name}
+                                </td>
+                                <td>${check.status}</td>
+                                <td>${check.response_time ? `${(check.response_time * 1000).toFixed(0)}ms` : 'N/A'}</td>
+                                <td>${check.last_check ? new Date(check.last_check).toLocaleString() : 'Never'}</td>
+                                <td>${check.error_message || '-'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            `;
+            
+            container.appendChild(table);
+        }
+
+        function loadTargets() {
+            apiRequest('/targets')
+                .then(response => {
+                    updateTargetsList(response.targets);
+                })
+                .catch(error => {
+                    console.error('Error loading targets:', error);
+                    showAlert('Error loading targets', 'error');
+                });
+        }
+
+        function updateTargetsList(targets) {
+            const container = document.getElementById('targets-list');
+            container.innerHTML = '';
+            
+            if (targets.length === 0) {
+                container.innerHTML = '<p>No monitoring targets configured</p>';
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'table';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Endpoint</th>
+                        <th>Status</th>
+                        <th>Check Interval</th>
+                        <th>Enabled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${targets.map(target => {
+                        const statusClass = target.status === 'up' ? 'status-up' : 'status-down';
+                        return `
+                            <tr>
+                                <td>${target.name}</td>
+                                <td>${target.type}</td>
+                                <td>${target.endpoint}</td>
+                                <td>
+                                    <span class="status-indicator ${statusClass}"></span>
+                                    ${target.status}
+                                </td>
+                                <td>${target.check_interval}s</td>
+                                <td>${target.enabled ? 'Yes' : 'No'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            `;
+            
+            container.appendChild(table);
+        }
+
+        function loadLogs() {
+            // Mock logs data - replace with actual API call
+            const logs = [
+                { timestamp: new Date().toISOString(), level: 'INFO', message: 'System started successfully' },
+                { timestamp: new Date(Date.now() - 60000).toISOString(), level: 'WARNING', message: 'High CPU usage detected' },
+                { timestamp: new Date(Date.now() - 120000).toISOString(), level: 'ERROR', message: 'Database connection failed' },
+                { timestamp: new Date(Date.now() - 180000).toISOString(), level: 'INFO', message: 'Health check completed' }
+            ];
+            
+            updateLogsList(logs);
+        }
+
+        function updateLogsList(logs) {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<p>No logs available</p>';
+                return;
+            }
+            
+            logs.forEach(log => {
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-entry';
+                logDiv.innerHTML = `
+                    <span class="log-timestamp">${new Date(log.timestamp).toLocaleString()}</span>
+                    <span class="log-level ${log.level.toLowerCase()}">[${log.level}]</span>
+                    <span class="log-message">${log.message}</span>
+                `;
+                container.appendChild(logDiv);
+            });
+        }
+
+        function loadMetrics() {
+            // Mock implementation - replace with actual chart library
+            console.log('Loading metrics charts...');
+        }
+
+        // Action functions
+        function acknowledgeAlert(alertId) {
+            apiRequest(`/alerts/${alertId}/acknowledge`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    acknowledged_by: 'web_user'
+                })
+            })
+            .then(response => {
+                if (response.success) {
+                    showAlert('Alert acknowledged successfully', 'success');
+                    loadAlerts();
+                } else {
+                    showAlert('Error acknowledging alert', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error acknowledging alert:', error);
+                showAlert('Error acknowledging alert', 'error');
+            });
+        }
+
+        function resolveAlert(alertId) {
+            apiRequest(`/alerts/${alertId}/resolve`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    resolved_by: 'web_user'
+                })
+            })
+            .then(response => {
+                if (response.success) {
+                    showAlert('Alert resolved successfully', 'success');
+                    loadAlerts();
+                } else {
+                    showAlert('Error resolving alert', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error resolving alert:', error);
+                showAlert('Error resolving alert', 'error');
+            });
+        }
+
+        function acknowledgeAllAlerts() {
+            if (confirm('Are you sure you want to acknowledge all active alerts?')) {
+                apiRequest('/alerts?status=active')
+                    .then(response => {
+                        const alerts = response.alerts;
+                        const promises = alerts.map(alert => 
+                            apiRequest(`/alerts/${alert.alert_id}/acknowledge`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    acknowledged_by: 'web_user'
+                                })
+                            })
+                        );
+                        
+                        return Promise.all(promises);
+                    })
+                    .then(() => {
+                        showAlert('All alerts acknowledged successfully', 'success');
+                        loadAlerts();
+                    })
+                    .catch(error => {
+                        console.error('Error acknowledging all alerts:', error);
+                        showAlert('Error acknowledging all alerts', 'error');
+                    });
+            }
+        }
+
+        function runHealthChecks() {
+            apiRequest('/health-checks/run', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.success) {
+                    showAlert('Health checks executed successfully', 'success');
+                    setTimeout(() => loadHealthChecks(), 2000);
+                } else {
+                    showAlert('Error running health checks', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error running health checks:', error);
+                showAlert('Error running health checks', 'error');
+            });
+        }
+
+        function filterAlerts() {
+            const severity = document.getElementById('alert-severity-filter').value;
+            const url = severity ? `/alerts?status=active&severity=${severity}` : '/alerts?status=active';
+            
+            apiRequest(url)
+                .then(response => {
+                    updateAlertsList(response.alerts);
+                })
+                .catch(error => {
+                    console.error('Error filtering alerts:', error);
+                    showAlert('Error filtering alerts', 'error');
+                });
+        }
+
+        function filterLogs() {
+            const level = document.getElementById('log-level-filter').value;
+            // Mock implementation - replace with actual filtering
+            loadLogs();
+        }
+
+        function clearLogs() {
+            document.getElementById('logs-container').innerHTML = '';
+        }
+
+        // Refresh functions
+        function refreshAll() {
+            loadSectionData(currentSection);
+            showAlert('Data refreshed', 'success');
+        }
+
+        function refreshAlerts() {
+            loadAlerts();
+        }
+
+        function refreshHealthChecks() {
+            loadHealthChecks();
+        }
+
+        function refreshTargets() {
+            loadTargets();
+        }
+
+        function refreshLogs() {
+            loadLogs();
+        }
+
+        // Auto-refresh functions
+        function startAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+            
+            refreshTimer = setInterval(() => {
+                if (autoRefreshEnabled) {
+                    loadSectionData(currentSection);
+                }
+            }, refreshInterval);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+        }
+
+        // Export function
+        function exportData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                section: currentSection,
+                data: 'exported_data_here'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `monitoring-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('Data exported successfully', 'success');
+        }
+    </script>
+</body>
+</html>

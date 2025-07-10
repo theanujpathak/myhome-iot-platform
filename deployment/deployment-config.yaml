@@ -1,0 +1,313 @@
+# Production Deployment Configuration
+# Configuration for automated deployment system
+
+# Global settings
+global:
+  organization: "MyHome IoT"
+  project: "Device Management Platform"
+  notification_channels:
+    - email
+    - slack
+  
+# Environments
+environments:
+  development:
+    name: "Development"
+    stage: "development"
+    description: "Development environment for testing"
+    api_endpoints:
+      device_service: "http://localhost:3002"
+      ota_service: "http://localhost:3003"
+      auth_service: "http://localhost:3001"
+    device_groups:
+      - "dev-devices"
+      - "test-devices"
+    approval_required: false
+    auto_rollback: true
+    health_check_url: "http://localhost:3002/health"
+    notification_channels:
+      - email
+    deployment_window:
+      start_time: "00:00"
+      end_time: "23:59"
+      timezone: "UTC"
+    max_concurrent_deployments: 20
+    rollback_timeout: 180
+    
+  testing:
+    name: "Testing"
+    stage: "testing"
+    description: "Testing environment for validation"
+    api_endpoints:
+      device_service: "http://test-api.i4planet.com:3002"
+      ota_service: "http://test-api.i4planet.com:3003"
+      auth_service: "http://test-api.i4planet.com:3001"
+    device_groups:
+      - "test-devices"
+      - "qa-devices"
+    approval_required: true
+    auto_rollback: true
+    health_check_url: "http://test-api.i4planet.com:3002/health"
+    notification_channels:
+      - email
+      - slack
+    deployment_window:
+      start_time: "09:00"
+      end_time: "17:00"
+      timezone: "UTC"
+    max_concurrent_deployments: 10
+    rollback_timeout: 300
+    
+  staging:
+    name: "Staging"
+    stage: "staging"
+    description: "Staging environment for final validation"
+    api_endpoints:
+      device_service: "http://staging-api.i4planet.com:3002"
+      ota_service: "http://staging-api.i4planet.com:3003"
+      auth_service: "http://staging-api.i4planet.com:3001"
+    device_groups:
+      - "staging-devices"
+      - "pre-prod-devices"
+    approval_required: true
+    auto_rollback: true
+    health_check_url: "http://staging-api.i4planet.com:3002/health"
+    notification_channels:
+      - email
+      - slack
+    deployment_window:
+      start_time: "10:00"
+      end_time: "16:00"
+      timezone: "UTC"
+    max_concurrent_deployments: 5
+    rollback_timeout: 300
+    
+  production:
+    name: "Production"
+    stage: "production"
+    description: "Production environment"
+    api_endpoints:
+      device_service: "https://api.i4planet.com:3002"
+      ota_service: "https://api.i4planet.com:3003"
+      auth_service: "https://api.i4planet.com:3001"
+    device_groups:
+      - "production-devices"
+      - "critical-devices"
+    approval_required: true
+    auto_rollback: true
+    health_check_url: "https://api.i4planet.com:3002/health"
+    notification_channels:
+      - email
+      - slack
+    deployment_window:
+      start_time: "02:00"
+      end_time: "06:00"
+      timezone: "UTC"
+    max_concurrent_deployments: 3
+    rollback_timeout: 600
+
+# Deployment strategies
+deployment_strategies:
+  blue_green:
+    name: "Blue-Green Deployment"
+    description: "Switch traffic between blue and green environments"
+    health_check_threshold: 95
+    switch_delay: 30
+    rollback_threshold: 85
+    
+  canary:
+    name: "Canary Deployment"
+    description: "Gradual rollout with canary releases"
+    initial_percentage: 5
+    increment_percentage: 10
+    increment_delay: 300
+    success_threshold: 90
+    
+  rolling:
+    name: "Rolling Update"
+    description: "Rolling update with gradual replacement"
+    batch_size: 3
+    batch_delay: 60
+    health_check_delay: 30
+    
+  immediate:
+    name: "Immediate Deployment"
+    description: "Deploy to all devices immediately"
+    health_check_delay: 10
+    rollback_threshold: 80
+
+# Quality gates
+quality_gates:
+  pre_deployment:
+    - firmware_validation
+    - device_compatibility_check
+    - security_scan
+    - performance_test
+    
+  post_deployment:
+    - health_check
+    - functionality_test
+    - performance_validation
+    - user_acceptance_test
+    
+  rollback_triggers:
+    - health_check_failure
+    - performance_degradation
+    - user_reported_issues
+    - security_incident
+
+# Health checks
+health_checks:
+  api_health:
+    type: "http"
+    endpoint: "/health"
+    method: "GET"
+    timeout: 30
+    expected_status: 200
+    retry_count: 3
+    retry_delay: 5
+    
+  device_connectivity:
+    type: "mqtt"
+    broker: "mqtt://broker.i4planet.com:1883"
+    topic: "health/check"
+    timeout: 60
+    expected_response: "ok"
+    
+  database_health:
+    type: "database"
+    connection_string: "postgresql://user:pass@db:5432/devicedb"
+    query: "SELECT 1"
+    timeout: 10
+    
+  system_metrics:
+    type: "metrics"
+    cpu_threshold: 80
+    memory_threshold: 85
+    disk_threshold: 90
+    network_threshold: 95
+
+# Notifications
+notifications:
+  email:
+    enabled: true
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    from_email: "noreply@i4planet.com"
+    recipients:
+      - "admin@i4planet.com"
+      - "dev-team@i4planet.com"
+    template_path: "templates/email"
+    
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    channel: "#deployments"
+    username: "DeploymentBot"
+    icon_emoji: ":rocket:"
+    
+  webhook:
+    enabled: false
+    url: "https://api.company.com/webhook/deployment"
+    method: "POST"
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer YOUR_TOKEN"
+
+# Security settings
+security:
+  api_key_auth: true
+  jwt_secret: "your-jwt-secret-key"
+  rate_limiting:
+    enabled: true
+    max_requests: 100
+    window_seconds: 60
+  ip_whitelist:
+    - "192.168.1.0/24"
+    - "10.0.0.0/8"
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 30
+
+# Logging and monitoring
+logging:
+  log_level: "INFO"
+  log_file: "deployment.log"
+  max_file_size: "100MB"
+  backup_count: 5
+  detailed_logging: true
+  audit_logging: true
+  
+monitoring:
+  metrics_enabled: true
+  metrics_port: 8080
+  metrics_path: "/metrics"
+  health_check_interval: 60
+  
+# Performance settings
+performance:
+  max_concurrent_deployments: 5
+  deployment_timeout: 3600
+  health_check_timeout: 300
+  rollback_timeout: 600
+  batch_size: 10
+  worker_threads: 20
+  
+# Backup and recovery
+backup:
+  enabled: true
+  backup_path: "/backup/deployments"
+  retention_days: 30
+  compression: true
+  encryption: true
+  
+recovery:
+  auto_recovery: true
+  max_recovery_attempts: 3
+  recovery_delay: 300
+  
+# Device management
+device_management:
+  device_discovery:
+    enabled: true
+    discovery_interval: 300
+    device_timeout: 60
+    
+  device_grouping:
+    strategy: "location_based"
+    max_group_size: 100
+    
+  device_health:
+    ping_interval: 30
+    offline_threshold: 180
+    
+# Firmware management
+firmware_management:
+  storage_path: "/firmware/releases"
+  max_storage_gb: 50
+  cleanup_old_versions: true
+  version_retention: 10
+  
+  validation:
+    checksum_validation: true
+    signature_validation: true
+    size_validation: true
+    compatibility_check: true
+    
+# Database settings
+database:
+  connection_string: "postgresql://user:pass@localhost:5432/deploymentdb"
+  pool_size: 20
+  max_overflow: 30
+  pool_timeout: 30
+  pool_recycle: 3600
+  
+# Cache settings
+cache:
+  enabled: true
+  cache_type: "redis"
+  redis_url: "redis://localhost:6379/0"
+  default_ttl: 3600
+  max_memory: "256MB"

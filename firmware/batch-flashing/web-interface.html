@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Firmware Flashing - Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .tab-button.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-button:hover {
+            background: #ecf0f1;
+        }
+
+        .tab-button.active:hover {
+            background: #2980b9;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .batch-list {
+            margin-top: 20px;
+        }
+
+        .batch-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .batch-item.running {
+            border-left-color: #f39c12;
+        }
+
+        .batch-item.completed {
+            border-left-color: #27ae60;
+        }
+
+        .batch-item.failed {
+            border-left-color: #e74c3c;
+        }
+
+        .batch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .batch-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .batch-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .status-created { background: #95a5a6; }
+        .status-running { background: #f39c12; }
+        .status-completed { background: #27ae60; }
+        .status-failed { background: #e74c3c; }
+        .status-cancelled { background: #7f8c8d; }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            transition: width 0.3s ease;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .device-item {
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .device-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .device-status.pending { background: #95a5a6; }
+        .device-status.flashing { background: #f39c12; }
+        .device-status.completed { background: #27ae60; }
+        .device-status.failed { background: #e74c3c; }
+
+        .targets-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .target-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .target-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-upload-label {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background: #2980b9;
+        }
+
+        .notification {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .notification.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .notification.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logs-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-line {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .log-error {
+            color: #e74c3c;
+        }
+
+        .log-warning {
+            color: #f39c12;
+        }
+
+        .log-info {
+            color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .batch-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .device-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Batch Firmware Flashing</h1>
+            <p>Control Panel for Mass Firmware Updates</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Batches</h3>
+                <div class="stat-value" id="totalBatches">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Batches</h3>
+                <div class="stat-value" id="activeBatches">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Devices Flashed</h3>
+                <div class="stat-value" id="devicesFlashed">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="stat-value" id="successRate">0%</div>
+            </div>
+        </div>
+
+        <div id="notification" class="notification"></div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('create')">Create Batch</button>
+            <button class="tab-button" onclick="showTab('batches')">Manage Batches</button>
+            <button class="tab-button" onclick="showTab('devices')">Discover Devices</button>
+            <button class="tab-button" onclick="showTab('logs')">System Logs</button>
+        </div>
+
+        <div id="create-tab" class="tab-content active">
+            <h2>Create New Batch</h2>
+            <form id="createBatchForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="batchName">Batch Name</label>
+                        <input type="text" id="batchName" name="batchName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deviceType">Device Type</label>
+                        <select id="deviceType" name="deviceType" required>
+                            <option value="">Select Device Type</option>
+                            <option value="esp32">ESP32</option>
+                            <option value="esp8266">ESP8266</option>
+                            <option value="arduino">Arduino</option>
+                            <option value="stm32">STM32</option>
+                            <option value="pico">Raspberry Pi Pico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firmwareVersion">Firmware Version</label>
+                        <input type="text" id="firmwareVersion" name="firmwareVersion" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="flashStrategy">Flash Strategy</label>
+                        <select id="flashStrategy" name="flashStrategy">
+                            <option value="parallel">Parallel</option>
+                            <option value="sequential">Sequential</option>
+                            <option value="gradual">Gradual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="firmwareFile">Firmware File</label>
+                    <div class="file-upload">
+                        <input type="file" id="firmwareFile" name="firmwareFile" accept=".bin,.hex,.uf2" required>
+                        <label for="firmwareFile" class="file-upload-label">Choose Firmware File</label>
+                    </div>
+                    <div id="fileInfo" style="margin-top: 10px; font-size: 0.9rem; color: #666;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="batchDescription">Description</label>
+                    <textarea id="batchDescription" name="batchDescription" placeholder="Optional description of the batch operation"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxConcurrent">Max Concurrent</label>
+                        <input type="number" id="maxConcurrent" name="maxConcurrent" value="5" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="timeout">Timeout (seconds)</label>
+                        <input type="number" id="timeout" name="timeout" value="300" min="30" max="3600">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="rollbackOnFailure" name="rollbackOnFailure">
+                        Enable rollback on failure
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Devices</label>
+                    <div class="targets-container">
+                        <div id="targetsList">
+                            <!-- Targets will be populated here -->
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addTarget()">Add Target Device</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Create Batch</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="batches-tab" class="tab-content">
+            <h2>Batch Management</h2>
+            <div class="loading" id="batchesLoading">
+                <div class="spinner"></div>
+                <p>Loading batches...</p>
+            </div>
+            <div id="batchesList" class="batch-list">
+                <!-- Batches will be populated here -->
+            </div>
+        </div>
+
+        <div id="devices-tab" class="tab-content">
+            <h2>Device Discovery</h2>
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="discoverDevices()">Discover Devices</button>
+                <select id="deviceTypeFilter" style="margin-left: 10px;">
+                    <option value="">All Device Types</option>
+                    <option value="esp32">ESP32</option>
+                    <option value="esp8266">ESP8266</option>
+                    <option value="arduino">Arduino</option>
+                    <option value="stm32">STM32</option>
+                    <option value="pico">Raspberry Pi Pico</option>
+                </select>
+            </div>
+            <div class="loading" id="devicesLoading">
+                <div class="spinner"></div>
+                <p>Discovering devices...</p>
+            </div>
+            <div id="discoveredDevices" class="device-grid">
+                <!-- Discovered devices will be populated here -->
+            </div>
+        </div>
+
+        <div id="logs-tab" class="tab-content">
+            <h2>System Logs</h2>
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="refreshLogs()">Refresh Logs</button>
+                <select id="logLines" style="margin-left: 10px;">
+                    <option value="50">Last 50 lines</option>
+                    <option value="100" selected>Last 100 lines</option>
+                    <option value="200">Last 200 lines</option>
+                    <option value="500">Last 500 lines</option>
+                </select>
+            </div>
+            <div id="logsContainer" class="logs-container">
+                <!-- Logs will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let targetCounter = 0;
+        let refreshInterval;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadBatches();
+            addTarget(); // Add initial target
+
+            // Set up auto-refresh
+            refreshInterval = setInterval(() => {
+                loadStats();
+                if (document.getElementById('batches-tab').classList.contains('active')) {
+                    loadBatches();
+                }
+            }, 5000);
+
+            // File upload handler
+            document.getElementById('firmwareFile').addEventListener('change', handleFileUpload);
+        });
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Load data for specific tabs
+            if (tabName === 'batches') {
+                loadBatches();
+            } else if (tabName === 'devices') {
+                // Auto-discover devices when tab is opened
+                // discoverDevices();
+            } else if (tabName === 'logs') {
+                refreshLogs();
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await apiCall('/stats');
+                if (response.success) {
+                    const stats = response.stats;
+                    document.getElementById('totalBatches').textContent = stats.total_batches;
+                    document.getElementById('activeBatches').textContent = stats.active_batches;
+                    document.getElementById('devicesFlashed').textContent = stats.total_devices_flashed;
+                    
+                    const totalDevices = stats.total_devices_flashed + stats.total_devices_failed;
+                    const successRate = totalDevices > 0 ? 
+                        Math.round((stats.total_devices_flashed / totalDevices) * 100) : 0;
+                    document.getElementById('successRate').textContent = `${successRate}%`;
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function loadBatches() {
+            const loading = document.getElementById('batchesLoading');
+            const container = document.getElementById('batchesList');
+            
+            loading.style.display = 'block';
+            
+            try {
+                const response = await apiCall('/batches');
+                if (response.success) {
+                    container.innerHTML = '';
+                    
+                    if (response.batches.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #666;">No batches found</p>';
+                    } else {
+                        response.batches.forEach(batch => {
+                            container.appendChild(createBatchElement(batch));
+                        });
+                    }
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load batches</p>';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function createBatchElement(batch) {
+            const element = document.createElement('div');
+            element.className = `batch-item ${batch.status}`;
+            
+            const successRate = batch.total_count > 0 ? 
+                Math.round((batch.success_count / batch.total_count) * 100) : 0;
+            
+            element.innerHTML = `
+                <div class="batch-header">
+                    <div class="batch-title">${batch.name}</div>
+                    <div class="batch-status status-${batch.status}">${batch.status.toUpperCase()}</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${batch.progress}%"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <span>Progress: ${batch.progress.toFixed(1)}%</span>
+                    <span>Success: ${batch.success_count}/${batch.total_count} (${successRate}%)</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-primary" onclick="viewBatchDetails('${batch.batch_id}')">View Details</button>
+                    ${batch.status === 'created' ? `<button class="btn btn-success" onclick="startBatch('${batch.batch_id}')">Start</button>` : ''}
+                    ${batch.status === 'running' ? `<button class="btn btn-warning" onclick="cancelBatch('${batch.batch_id}')">Cancel</button>` : ''}
+                    ${batch.status === 'completed' ? `<button class="btn btn-primary" onclick="downloadReport('${batch.batch_id}')">Download Report</button>` : ''}
+                </div>
+            `;
+            
+            return element;
+        }
+
+        async function startBatch(batchId) {
+            try {
+                const response = await apiCall(`/batches/${batchId}/start`, {
+                    method: 'POST'
+                });
+                
+                if (response.success) {
+                    showNotification('Batch started successfully');
+                    loadBatches();
+                } else {
+                    showNotification(response.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to start batch', 'error');
+            }
+        }
+
+        async function cancelBatch(batchId) {
+            if (confirm('Are you sure you want to cancel this batch?')) {
+                try {
+                    const response = await apiCall(`/batches/${batchId}/cancel`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.success) {
+                        showNotification('Batch cancelled successfully');
+                        loadBatches();
+                    } else {
+                        showNotification(response.error, 'error');
+                    }
+                } catch (error) {
+                    showNotification('Failed to cancel batch', 'error');
+                }
+            }
+        }
+
+        async function viewBatchDetails(batchId) {
+            try {
+                const response = await apiCall(`/batches/${batchId}`);
+                if (response.success) {
+                    const batch = response.batch;
+                    
+                    // Create a modal or detailed view
+                    const modal = document.createElement('div');
+                    modal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.5);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 1000;
+                    `;
+                    
+                    modal.innerHTML = `
+                        <div style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; max-height: 80vh; overflow-y: auto; width: 90%;">
+                            <h2>Batch Details: ${batch.name}</h2>
+                            <p><strong>Status:</strong> ${batch.status}</p>
+                            <p><strong>Progress:</strong> ${batch.progress.toFixed(1)}%</p>
+                            <p><strong>Success:</strong> ${batch.success_count}/${batch.total_count}</p>
+                            <p><strong>Failed:</strong> ${batch.failure_count}</p>
+                            <p><strong>Created:</strong> ${new Date(batch.created_at).toLocaleString()}</p>
+                            
+                            <h3>Target Devices</h3>
+                            <div class="device-grid">
+                                ${batch.targets.map(target => `
+                                    <div class="device-item">
+                                        <div class="device-status ${target.status}"></div>
+                                        ${target.device_id}
+                                        <div style="font-size: 0.8rem; color: #666;">${target.status}</div>
+                                        ${target.error_message ? `<div style="font-size: 0.7rem; color: #e74c3c;">${target.error_message}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div style="margin-top: 20px; text-align: center;">
+                                <button class="btn btn-primary" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    // Close modal when clicking outside
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.remove();
+                        }
+                    });
+                }
+            } catch (error) {
+                showNotification('Failed to load batch details', 'error');
+            }
+        }
+
+        async function downloadReport(batchId) {
+            try {
+                const response = await fetch(`${API_BASE}/batches/${batchId}/report/download`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `batch_report_${batchId}.json`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    showNotification('Failed to download report', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to download report', 'error');
+            }
+        }
+
+        function addTarget() {
+            const container = document.getElementById('targetsList');
+            const targetDiv = document.createElement('div');
+            targetDiv.className = 'target-item';
+            targetDiv.innerHTML = `
+                <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <input type="text" placeholder="Device ID" name="deviceId" required>
+                    <select name="deviceType" required>
+                        <option value="">Device Type</option>
+                        <option value="esp32">ESP32</option>
+                        <option value="esp8266">ESP8266</option>
+                        <option value="arduino">Arduino</option>
+                        <option value="stm32">STM32</option>
+                        <option value="pico">Raspberry Pi Pico</option>
+                    </select>
+                    <input type="text" placeholder="Connection (e.g., /dev/ttyUSB0)" name="connection" required>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+            `;
+            container.appendChild(targetDiv);
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileInfo = document.getElementById('fileInfo');
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            fileInfo.textContent = `Selected: ${file.name} (${fileSize} MB)`;
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('firmware', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/firmware/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    fileInfo.textContent += ` - Uploaded successfully`;
+                    // Store file path for form submission
+                    document.getElementById('firmwareFile').dataset.uploadedPath = result.file_path;
+                } else {
+                    fileInfo.textContent += ` - Upload failed: ${result.error}`;
+                }
+            } catch (error) {
+                fileInfo.textContent += ` - Upload failed: ${error.message}`;
+            }
+        }
+
+        document.getElementById('createBatchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const targets = [];
+
+            // Collect targets
+            const targetItems = document.querySelectorAll('.target-item');
+            targetItems.forEach(item => {
+                const deviceId = item.querySelector('input[name="deviceId"]').value;
+                const deviceType = item.querySelector('select[name="deviceType"]').value;
+                const connection = item.querySelector('input[name="connection"]').value;
+
+                if (deviceId && deviceType && connection) {
+                    targets.push({
+                        device_id: deviceId,
+                        device_type: deviceType,
+                        connection_info: {
+                            port: connection
+                        }
+                    });
+                }
+            });
+
+            if (targets.length === 0) {
+                showNotification('Please add at least one target device', 'error');
+                return;
+            }
+
+            const uploadedPath = document.getElementById('firmwareFile').dataset.uploadedPath;
+            if (!uploadedPath) {
+                showNotification('Please upload firmware file first', 'error');
+                return;
+            }
+
+            const batchData = {
+                name: formData.get('batchName'),
+                firmware_file: uploadedPath,
+                device_type: formData.get('deviceType'),
+                version: formData.get('firmwareVersion'),
+                description: formData.get('batchDescription'),
+                strategy: formData.get('flashStrategy'),
+                max_concurrent: parseInt(formData.get('maxConcurrent')),
+                timeout: parseInt(formData.get('timeout')),
+                rollback_on_failure: formData.get('rollbackOnFailure') === 'on',
+                targets: targets
+            };
+
+            try {
+                const response = await apiCall('/batches', {
+                    method: 'POST',
+                    body: JSON.stringify(batchData)
+                });
+
+                if (response.success) {
+                    showNotification('Batch created successfully');
+                    this.reset();
+                    document.getElementById('fileInfo').textContent = '';
+                    document.getElementById('targetsList').innerHTML = '';
+                    addTarget();
+                } else {
+                    showNotification(response.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to create batch', 'error');
+            }
+        });
+
+        async function discoverDevices() {
+            const loading = document.getElementById('devicesLoading');
+            const container = document.getElementById('discoveredDevices');
+            const deviceType = document.getElementById('deviceTypeFilter').value;
+
+            loading.style.display = 'block';
+            container.innerHTML = '';
+
+            try {
+                const response = await apiCall(`/devices/discover${deviceType ? `?device_type=${deviceType}` : ''}`);
+                if (response.success) {
+                    if (response.devices.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1/-1;">No devices found</p>';
+                    } else {
+                        response.devices.forEach(device => {
+                            const deviceElement = document.createElement('div');
+                            deviceElement.className = 'device-item';
+                            deviceElement.innerHTML = `
+                                <div><strong>${device.device_id}</strong></div>
+                                <div style="font-size: 0.8rem; color: #666;">${device.device_type}</div>
+                                <div style="font-size: 0.7rem; color: #999;">${device.connection_info.port}</div>
+                                <div style="margin-top: 5px;">
+                                    <button class="btn btn-primary" onclick="addDeviceToTargets('${device.device_id}', '${device.device_type}', '${device.connection_info.port}')">Add to Targets</button>
+                                </div>
+                            `;
+                            container.appendChild(deviceElement);
+                        });
+                    }
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c; grid-column: 1/-1;">Failed to discover devices</p>';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function addDeviceToTargets(deviceId, deviceType, port) {
+            showTab('create');
+            
+            // Add a new target with the device info
+            const container = document.getElementById('targetsList');
+            const targetDiv = document.createElement('div');
+            targetDiv.className = 'target-item';
+            targetDiv.innerHTML = `
+                <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <input type="text" placeholder="Device ID" name="deviceId" value="${deviceId}" required>
+                    <select name="deviceType" required>
+                        <option value="">Device Type</option>
+                        <option value="esp32" ${deviceType === 'esp32' ? 'selected' : ''}>ESP32</option>
+                        <option value="esp8266" ${deviceType === 'esp8266' ? 'selected' : ''}>ESP8266</option>
+                        <option value="arduino" ${deviceType === 'arduino' ? 'selected' : ''}>Arduino</option>
+                        <option value="stm32" ${deviceType === 'stm32' ? 'selected' : ''}>STM32</option>
+                        <option value="pico" ${deviceType === 'pico' ? 'selected' : ''}>Raspberry Pi Pico</option>
+                    </select>
+                    <input type="text" placeholder="Connection (e.g., /dev/ttyUSB0)" name="connection" value="${port}" required>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+            `;
+            container.appendChild(targetDiv);
+            
+            showNotification(`Added ${deviceId} to targets`);
+        }
+
+        async function refreshLogs() {
+            const container = document.getElementById('logsContainer');
+            const lines = document.getElementById('logLines').value;
+
+            container.innerHTML = '<div style="text-align: center;">Loading logs...</div>';
+
+            try {
+                const response = await apiCall(`/logs?lines=${lines}`);
+                if (response.success) {
+                    container.innerHTML = '';
+                    
+                    if (response.logs.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; color: #666;">No logs found</div>';
+                    } else {
+                        response.logs.forEach(line => {
+                            const logDiv = document.createElement('div');
+                            logDiv.className = 'log-line';
+                            
+                            // Color code logs based on level
+                            if (line.includes('ERROR')) {
+                                logDiv.classList.add('log-error');
+                            } else if (line.includes('WARNING')) {
+                                logDiv.classList.add('log-warning');
+                            } else if (line.includes('INFO')) {
+                                logDiv.classList.add('log-info');
+                            }
+                            
+                            logDiv.textContent = line;
+                            container.appendChild(logDiv);
+                        });
+                    }
+                    
+                    // Scroll to bottom
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (error) {
+                container.innerHTML = '<div style="text-align: center; color: #e74c3c;">Failed to load logs</div>';
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

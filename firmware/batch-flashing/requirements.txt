@@ -1,0 +1,70 @@
+# Batch Firmware Flashing System Requirements
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+PyYAML>=6.0
+requests>=2.28.0
+pyserial>=3.5
+esptool>=4.5.0
+
+# Web API dependencies
+Flask>=2.2.0
+Flask-CORS>=4.0.0
+Werkzeug>=2.2.0
+
+# CLI dependencies
+click>=8.0.0
+rich>=12.0.0
+
+# Async and threading
+asyncio>=3.4.3
+concurrent-futures>=3.1.1
+
+# File handling
+pathlib>=1.0.0
+tempfile>=1.0.0
+
+# Cryptography and security
+hashlib>=20081119
+cryptography>=3.4.8
+
+# Database (optional)
+SQLAlchemy>=1.4.0
+alembic>=1.8.0
+
+# Monitoring and logging
+psutil>=5.9.0
+logging>=0.4.9.6
+
+# Development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+mypy>=0.991
+
+# Optional GUI dependencies
+# tkinter              # Usually included with Python
+# PyQt5>=5.15.0       # Alternative GUI framework
+
+# Optional notification dependencies
+# twilio>=7.0.0       # SMS notifications
+# smtplib             # Email notifications (built-in)
+# slack-sdk>=3.0.0    # Slack notifications
+
+# Hardware-specific dependencies
+# RPi.GPIO>=0.7.1     # For Raspberry Pi GPIO (install only on RPi)
+# gpiozero>=1.6.0     # For GPIO control (install only on RPi)
+
+# Network discovery
+# zeroconf>=0.39.0    # For mDNS/Bonjour discovery
+# netifaces>=0.11.0   # For network interface enumeration
+
+# Performance monitoring
+# memory-profiler>=0.60.0
+# line-profiler>=3.5.0
+
+# Documentation
+# sphinx>=5.0.0
+# sphinx-rtd-theme>=1.0.0

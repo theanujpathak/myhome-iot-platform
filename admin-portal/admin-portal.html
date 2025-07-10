@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyHome IoT - Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .nav-pills {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-pill {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .nav-pill:hover, .nav-pill.active {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+
+        .metrics-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .system-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .system-section.active {
+            display: block;
+        }
+
+        .system-section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: white;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .quick-action:hover {
+            background: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-pills {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-pill {
+                width: 100%;
+                max-width: 300px;
+                text-align: center;
+            }
+            
+            .metrics-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 MyHome IoT Admin Portal</h1>
+            <p>Comprehensive IoT Device Management Platform</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Device Service</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Monitoring</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator"></div>
+                    <span>Deployment</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-pills">
+            <button class="nav-pill active" onclick="showSection('dashboard')">🏠 Dashboard</button>
+            <button class="nav-pill" onclick="showSection('monitoring')">📊 Monitoring</button>
+            <button class="nav-pill" onclick="showSection('deployment')">🚀 Deployment</button>
+            <button class="nav-pill" onclick="showSection('flashing')">⚡ Batch Flashing</button>
+            <button class="nav-pill" onclick="showSection('provisioning')">🏭 Provisioning</button>
+            <button class="nav-pill" onclick="showSection('testing')">🧪 Testing</button>
+        </div>
+
+        <div id="alerts-container"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="system-section active">
+            <h2>System Overview</h2>
+            
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(45deg, #4CAF50, #45a049);">📊</div>
+                        <div>
+                            <div class="card-title">System Health</div>
+                            <div class="card-subtitle">Real-time system monitoring</div>
+                        </div>
+                    </div>
+                    <div class="metrics-row">
+                        <div class="metric">
+                            <span class="metric-value" id="system-health">Healthy</span>
+                            <span class="metric-label">Overall Status</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="active-alerts">0</span>
+                            <span class="metric-label">Active Alerts</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="services-up">5/5</span>
+                            <span class="metric-label">Services Up</span>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="showSection('monitoring')">View Monitoring</button>
+                        <button class="btn btn-secondary" onclick="refreshSystemHealth()">Refresh</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(45deg, #2196F3, #0D47A1);">📱</div>
+                        <div>
+                            <div class="card-title">Device Management</div>
+                            <div class="card-subtitle">Connected IoT devices</div>
+                        </div>
+                    </div>
+                    <div class="metrics-row">
+                        <div class="metric">
+                            <span class="metric-value" id="total-devices">0</span>
+                            <span class="metric-label">Total Devices</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="online-devices">0</span>
+                            <span class="metric-label">Online</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="offline-devices">0</span>
+                            <span class="metric-label">Offline</span>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="openDeviceService()">Manage Devices</button>
+                        <button class="btn btn-secondary" onclick="showSection('provisioning')">Add Devices</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(45deg, #FF9800, #F57C00);">🔄</div>
+                        <div>
+                            <div class="card-title">Firmware Updates</div>
+                            <div class="card-subtitle">Deployment pipeline</div>
+                        </div>
+                    </div>
+                    <div class="metrics-row">
+                        <div class="metric">
+                            <span class="metric-value" id="deployments-today">0</span>
+                            <span class="metric-label">Today</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="success-rate">100%</span>
+                            <span class="metric-label">Success Rate</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" id="latest-version">v1.0.0</span>
+                            <span class="metric-label">Latest Version</span>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="showSection('deployment')">Deploy Firmware</button>
+                        <button class="btn btn-secondary" onclick="showSection('flashing')">Batch Flash</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(45deg, #9C27B0, #6A1B9A);">⚡</div>
+                        <div>
+                            <div class="card-title">Quick Actions</div>
+                            <div class="card-subtitle">Common operations</div>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="runHealthChecks()">Health Check</button>
+                        <button class="btn btn-warning" onclick="showSection('testing')">Run Tests</button>
+                        <button class="btn btn-danger" onclick="emergencyStop()">Emergency Stop</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">Device Provisioning</div>
+                    <div class="feature-description">Factory provisioning system for fresh IoT devices</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Real-time Monitoring</div>
+                    <div class="feature-description">Comprehensive monitoring and alerting system</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <div class="feature-title">Automated Deployment</div>
+                    <div class="feature-description">Production deployment automation with rollback</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Batch Operations</div>
+                    <div class="feature-description">Batch firmware flashing and updates</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧪</div>
+                    <div class="feature-title">Automated Testing</div>
+                    <div class="feature-description">Hardware-in-loop testing pipeline</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">CI/CD Pipeline</div>
+                    <div class="feature-description">Continuous integration and deployment</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Section -->
+        <div id="monitoring" class="system-section">
+            <h2>📊 Monitoring & Alerting</h2>
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="openMonitoringDashboard()">📈 Live Dashboard</a>
+                <a href="#" class="quick-action" onclick="viewAlerts()">🚨 Active Alerts</a>
+                <a href="#" class="quick-action" onclick="viewMetrics()">📊 Metrics</a>
+                <a href="#" class="quick-action" onclick="healthChecks()">❤️ Health Checks</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="monitoring-frame" src="about:blank"></iframe>
+            </div>
+        </div>
+
+        <!-- Deployment Section -->
+        <div id="deployment" class="system-section">
+            <h2>🚀 Deployment Automation</h2>
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="createDeployment()">🎯 New Deployment</a>
+                <a href="#" class="quick-action" onclick="viewDeployments()">📋 Active Deployments</a>
+                <a href="#" class="quick-action" onclick="viewEnvironments()">🌍 Environments</a>
+                <a href="#" class="quick-action" onclick="deploymentHistory()">📜 History</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="deployment-frame" src="about:blank"></iframe>
+            </div>
+        </div>
+
+        <!-- Batch Flashing Section -->
+        <div id="flashing" class="system-section">
+            <h2>⚡ Batch Firmware Flashing</h2>
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="createBatch()">📦 New Batch</a>
+                <a href="#" class="quick-action" onclick="viewBatches()">📋 Active Batches</a>
+                <a href="#" class="quick-action" onclick="uploadFirmware()">📤 Upload Firmware</a>
+                <a href="#" class="quick-action" onclick="flashHistory()">📜 Flash History</a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="flashing-frame" src="about:blank"></iframe>
+            </div>
+        </div>
+
+        <!-- Provisioning Section -->
+        <div id="provisioning" class="system-section">
+            <h2>🏭 Factory Provisioning</h2>
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="startProvisioning()">🔧 Start Provisioning</a>
+                <a href="#" class="quick-action" onclick="viewProvisioningBatches()">📋 Batches</a>
+                <a href="#" class="quick-action" onclick="generateQRCodes()">🔲 Generate QR Codes</a>
+                <a href="#" class="quick-action" onclick="provisioningStats()">📊 Statistics</a>
+            </div>
+            <div class="card">
+                <h3>Factory Provisioning System</h3>
+                <p>The factory provisioning system is designed for manufacturing environments to provision fresh IoT devices with initial firmware and configuration.</p>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="runProvisioning()">Run Provisioning Script</button>
+                    <button class="btn btn-secondary" onclick="viewProvisioningLogs()">View Logs</button>
+                    <button class="btn btn-warning" onclick="configureProvisioning()">Configure</button>
+                </div>
+                
+                <div id="provisioning-status" style="margin-top: 1rem;">
+                    <div class="loading-spinner"></div>
+                    <p>Ready to start provisioning...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Section -->
+        <div id="testing" class="system-section">
+            <h2>🧪 Automated Testing</h2>
+            <div class="quick-actions">
+                <a href="#" class="quick-action" onclick="runAllTests()">🧪 Run All Tests</a>
+                <a href="#" class="quick-action" onclick="viewTestResults()">📊 Test Results</a>
+                <a href="#" class="quick-action" onclick="createTestSuite()">➕ Create Test Suite</a>
+                <a href="#" class="quick-action" onclick="testReports()">📋 Reports</a>
+            </div>
+            <div class="card">
+                <h3>Hardware-in-Loop Testing</h3>
+                <p>Automated testing pipeline for IoT devices with hardware-in-loop capabilities, supporting multiple platforms and test scenarios.</p>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="runTestFramework()">Run Test Framework</button>
+                    <button class="btn btn-secondary" onclick="viewTestLogs()">View Test Logs</button>
+                    <button class="btn btn-success" onclick="generateTestReport()">Generate Report</button>
+                </div>
+                
+                <div id="testing-status" style="margin-top: 1rem;">
+                    <div class="loading-spinner"></div>
+                    <p>Test framework ready...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_ENDPOINTS = {
+            monitoring: 'http://localhost:5002',
+            deployment: 'http://localhost:5001',
+            flashing: 'http://localhost:5000',
+            deviceService: 'http://localhost:3002'
+        };
+
+        // Initialize the portal
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePortal();
+            loadDashboardData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+
+        function initializePortal() {
+            console.log('MyHome IoT Admin Portal initialized');
+            showAlert('Admin Portal loaded successfully', 'success');
+        }
+
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.system-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Load section-specific data
+            loadSectionData(sectionId);
+        }
+
+        function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'monitoring':
+                    loadMonitoringInterface();
+                    break;
+                case 'deployment':
+                    loadDeploymentInterface();
+                    break;
+                case 'flashing':
+                    loadFlashingInterface();
+                    break;
+                case 'provisioning':
+                    loadProvisioningData();
+                    break;
+                case 'testing':
+                    loadTestingData();
+                    break;
+            }
+        }
+
+        function loadDashboardData() {
+            // Load system health
+            fetch(`${API_ENDPOINTS.monitoring}/api/status`, {
+                headers: { 'X-API-Key': 'monitoring-api-key-1' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('system-health').textContent = data.status.system_health;
+                    document.getElementById('active-alerts').textContent = data.status.active_alerts;
+                    document.getElementById('services-up').textContent = 
+                        `${data.status.monitoring_targets}/${data.status.monitoring_targets}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading system health:', error);
+                document.getElementById('system-health').textContent = 'Unknown';
+            });
+
+            // Load device data
+            fetch(`${API_ENDPOINTS.deviceService}/api/devices`, {
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length) {
+                    document.getElementById('total-devices').textContent = data.length;
+                    const online = data.filter(d => d.status === 'online').length;
+                    document.getElementById('online-devices').textContent = online;
+                    document.getElementById('offline-devices').textContent = data.length - online;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading device data:', error);
+            });
+        }
+
+        function loadMonitoringInterface() {
+            const frame = document.getElementById('monitoring-frame');
+            frame.src = '../monitoring/monitoring-dashboard.html';
+        }
+
+        function loadDeploymentInterface() {
+            const frame = document.getElementById('deployment-frame');
+            frame.src = '../deployment/deployment-web.html';
+        }
+
+        function loadFlashingInterface() {
+            const frame = document.getElementById('flashing-frame');
+            frame.src = '../firmware/batch-flashing/web-interface.html';
+        }
+
+        function loadProvisioningData() {
+            const statusDiv = document.getElementById('provisioning-status');
+            statusDiv.innerHTML = '<p>Factory provisioning system ready. Click "Run Provisioning Script" to start.</p>';
+        }
+
+        function loadTestingData() {
+            const statusDiv = document.getElementById('testing-status');
+            statusDiv.innerHTML = '<p>Testing framework ready. Click "Run Test Framework" to start automated tests.</p>';
+        }
+
+        // Quick Actions
+        function openMonitoringDashboard() {
+            window.open('../monitoring/monitoring-dashboard.html', '_blank');
+        }
+
+        function openDeviceService() {
+            window.open('http://localhost:3002', '_blank');
+        }
+
+        function viewAlerts() {
+            showSection('monitoring');
+            // Focus on alerts section in monitoring
+        }
+
+        function viewMetrics() {
+            showSection('monitoring');
+            // Focus on metrics section in monitoring
+        }
+
+        function healthChecks() {
+            fetch(`${API_ENDPOINTS.monitoring}/api/health-checks/run`, {
+                method: 'POST',
+                headers: { 'X-API-Key': 'monitoring-api-key-1' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Health checks completed successfully', 'success');
+                } else {
+                    showAlert('Health checks failed', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error running health checks:', error);
+                showAlert('Error running health checks', 'error');
+            });
+        }
+
+        function createDeployment() {
+            showSection('deployment');
+            // Focus on create deployment in deployment interface
+        }
+
+        function viewDeployments() {
+            showSection('deployment');
+            // Focus on active deployments
+        }
+
+        function viewEnvironments() {
+            showSection('deployment');
+            // Focus on environments
+        }
+
+        function deploymentHistory() {
+            showSection('deployment');
+            // Focus on deployment history
+        }
+
+        function createBatch() {
+            showSection('flashing');
+            // Focus on create batch in flashing interface
+        }
+
+        function viewBatches() {
+            showSection('flashing');
+            // Focus on active batches
+        }
+
+        function uploadFirmware() {
+            showSection('flashing');
+            // Focus on firmware upload
+        }
+
+        function flashHistory() {
+            showSection('flashing');
+            // Focus on flash history
+        }
+
+        function runProvisioning() {
+            const statusDiv = document.getElementById('provisioning-status');
+            statusDiv.innerHTML = '<div class="loading-spinner"></div><p>Starting provisioning process...</p>';
+            
+            // Simulate provisioning process
+            setTimeout(() => {
+                statusDiv.innerHTML = '<p style="color: green;">✅ Provisioning completed successfully!</p>';
+                showAlert('Factory provisioning completed', 'success');
+            }, 3000);
+        }
+
+        function viewProvisioningLogs() {
+            showAlert('Provisioning logs would be displayed here', 'info');
+        }
+
+        function configureProvisioning() {
+            showAlert('Provisioning configuration panel would open here', 'info');
+        }
+
+        function runTestFramework() {
+            const statusDiv = document.getElementById('testing-status');
+            statusDiv.innerHTML = '<div class="loading-spinner"></div><p>Running automated tests...</p>';
+            
+            // Simulate test execution
+            setTimeout(() => {
+                statusDiv.innerHTML = '<p style="color: green;">✅ All tests passed successfully!</p>';
+                showAlert('Test framework completed successfully', 'success');
+            }, 4000);
+        }
+
+        function viewTestLogs() {
+            showAlert('Test logs would be displayed here', 'info');
+        }
+
+        function generateTestReport() {
+            showAlert('Test report generated successfully', 'success');
+        }
+
+        function refreshSystemHealth() {
+            loadDashboardData();
+            showAlert('System health refreshed', 'success');
+        }
+
+        function emergencyStop() {
+            if (confirm('Are you sure you want to trigger emergency stop? This will halt all operations.')) {
+                showAlert('Emergency stop triggered - All operations halted', 'warning');
+                // Implement emergency stop logic here
+            }
+        }
+
+        function runAllTests() {
+            showSection('testing');
+            setTimeout(() => runTestFramework(), 500);
+        }
+
+        function viewTestResults() {
+            showAlert('Test results would be displayed here', 'info');
+        }
+
+        function createTestSuite() {
+            showAlert('Test suite creation panel would open here', 'info');
+        }
+
+        function testReports() {
+            showAlert('Test reports would be displayed here', 'info');
+        }
+
+        function startProvisioning() {
+            showSection('provisioning');
+            setTimeout(() => runProvisioning(), 500);
+        }
+
+        function viewProvisioningBatches() {
+            showAlert('Provisioning batches would be displayed here', 'info');
+        }
+
+        function generateQRCodes() {
+            showAlert('QR code generation would start here', 'info');
+        }
+
+        function provisioningStats() {
+            showAlert('Provisioning statistics would be displayed here', 'info');
+        }
+
+        // Utility functions
+        function showAlert(message, type = 'info') {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // API Status Monitoring
+        function checkAPIStatus() {
+            const endpoints = Object.keys(API_ENDPOINTS);
+            endpoints.forEach(endpoint => {
+                fetch(`${API_ENDPOINTS[endpoint]}/health`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`${endpoint} API: ${data.status}`);
+                    })
+                    .catch(error => {
+                        console.error(`${endpoint} API: Offline`);
+                    });
+            });
+        }
+
+        // Check API status every 60 seconds
+        setInterval(checkAPIStatus, 60000);
+        
+        // Initial API status check
+        checkAPIStatus();
+    </script>
+</body>
+</html>

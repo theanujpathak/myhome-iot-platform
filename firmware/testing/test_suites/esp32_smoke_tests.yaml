@@ -1,0 +1,162 @@
+# ESP32 Smoke Tests
+# Quick validation tests for ESP32 firmware
+
+name: "esp32_smoke_tests"
+description: "Quick smoke tests for ESP32 firmware validation"
+platform: "esp32"
+category: "smoke"
+
+# Setup commands to run before tests
+setup_commands:
+  - "reset"
+  - "boot"
+  - "wait:3"
+
+# Teardown commands to run after tests
+teardown_commands:
+  - "reset"
+
+# Test cases
+test_cases:
+  - name: "boot_test"
+    description: "Verify device boots correctly and responds to commands"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 2
+    parameters:
+      command: "info"
+      expected_response: "ESP32"
+      check_patterns:
+        - "ESP32"
+        - "Ready"
+        - "OK"
+    
+  - name: "memory_test"
+    description: "Check available memory and heap status"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 3
+    parameters:
+      command: "memory_info"
+      min_free_heap: 100000
+      max_heap_fragmentation: 20
+      check_patterns:
+        - "Free heap:"
+        - "Min free heap:"
+        - "OK"
+    
+  - name: "gpio_basic_test"
+    description: "Test basic GPIO functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 2
+    parameters:
+      command: "gpio_test"
+      pin: 2
+      mode: "output"
+      value: 1
+      check_patterns:
+        - "GPIO"
+        - "OK"
+    
+  - name: "wifi_scan_test"
+    description: "Test WiFi scanning capability"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 20
+    retry_count: 3
+    parameters:
+      command: "wifi_scan"
+      min_networks: 1
+      timeout: 15
+      check_patterns:
+        - "WiFi scan"
+        - "Networks found:"
+        - "OK"
+    
+  - name: "i2c_test"
+    description: "Test I2C bus functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 2
+    parameters:
+      command: "i2c_scan"
+      expected_devices: []
+      check_patterns:
+        - "I2C scan"
+        - "OK"
+    
+  - name: "watchdog_test"
+    description: "Test watchdog timer functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 2
+    parameters:
+      command: "watchdog_test"
+      timeout: 10
+      check_patterns:
+        - "Watchdog"
+        - "OK"
+    
+  - name: "flash_test"
+    description: "Test flash memory operations"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 2
+    parameters:
+      command: "flash_test"
+      test_size: 1024
+      check_patterns:
+        - "Flash test"
+        - "Write OK"
+        - "Read OK"
+        - "Verify OK"
+    
+  - name: "timer_test"
+    description: "Test hardware timer functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 2
+    parameters:
+      command: "timer_test"
+      duration: 5
+      check_patterns:
+        - "Timer test"
+        - "OK"
+    
+  - name: "serial_test"
+    description: "Test serial communication"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 2
+    parameters:
+      command: "serial_test"
+      test_string: "Hello World"
+      check_patterns:
+        - "Serial test"
+        - "Echo:"
+        - "OK"
+    
+  - name: "power_test"
+    description: "Test power management features"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 2
+    parameters:
+      command: "power_test"
+      mode: "light_sleep"
+      duration: 3
+      check_patterns:
+        - "Power test"
+        - "Sleep mode"
+        - "Wake up"
+        - "OK"

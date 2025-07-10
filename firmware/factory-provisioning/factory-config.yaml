@@ -1,0 +1,144 @@
+# Factory Provisioning Configuration
+# Configuration for the factory provisioning system
+
+# OTA and Provisioning Service URLs
+provisioning_service_url: "http://localhost:3002"
+ota_service_url: "http://localhost:3004"
+
+# Flashing Stations Configuration
+stations:
+  - station_id: "station_1"
+    ports:
+      - "/dev/ttyUSB0"
+      - "/dev/ttyUSB1"
+      - "/dev/ttyUSB2"
+      - "/dev/ttyUSB3"
+    board_type: "esp32"
+    
+  - station_id: "station_2"
+    ports:
+      - "/dev/ttyUSB4"
+      - "/dev/ttyUSB5"
+      - "/dev/ttyUSB6"
+      - "/dev/ttyUSB7"
+    board_type: "esp8266"
+
+# Board Configurations
+board_configs:
+  esp32:
+    platform: "esp32"
+    board_model: "ESP32-WROOM-32"
+    flash_size: "4MB"
+    flash_speed: "80m"
+    firmware_path: "../dist/esp32/firmware-latest.bin"
+    bootloader_path: "../dist/esp32/bootloader.bin"
+    partition_table_path: "../dist/esp32/partitions.bin"
+    default_baudrate: 115200
+    flash_baudrate: 921600
+    reset_method: "hard_reset"
+    
+  esp8266:
+    platform: "esp8266"
+    board_model: "NodeMCU"
+    flash_size: "4MB"
+    flash_speed: "80m"
+    firmware_path: "../dist/esp8266/firmware-latest.bin"
+    default_baudrate: 115200
+    flash_baudrate: 460800
+    reset_method: "hard_reset"
+    
+  arduino:
+    platform: "arduino"
+    board_model: "Arduino Uno R3"
+    flash_size: "32KB"
+    flash_speed: "16m"
+    firmware_path: "../dist/arduino/firmware-latest.hex"
+    default_baudrate: 9600
+    flash_baudrate: 57600
+    reset_method: "soft_reset"
+    
+  stm32:
+    platform: "stm32"
+    board_model: "STM32F411RE"
+    flash_size: "512KB"
+    flash_speed: "72m"
+    firmware_path: "../dist/stm32/firmware-latest.bin"
+    default_baudrate: 115200
+    flash_baudrate: 115200
+    reset_method: "hard_reset"
+    
+  pico:
+    platform: "pico"
+    board_model: "Pico W"
+    flash_size: "2MB"
+    flash_speed: "133m"
+    firmware_path: "../dist/pico/firmware-latest.uf2"
+    default_baudrate: 115200
+    flash_baudrate: 115200
+    reset_method: "soft_reset"
+
+# Quality Gates and Validation
+quality_gates:
+  max_firmware_size:
+    esp32: 3145728      # 3MB
+    esp8266: 1048576    # 1MB
+    arduino: 30720      # 30KB
+    stm32: 524288       # 512KB
+    pico: 2097152       # 2MB
+  
+  max_flash_time: 120   # seconds
+  max_retry_attempts: 3
+  test_timeout: 30      # seconds
+
+# Batch Processing Settings
+batch_processing:
+  max_batch_size: 100
+  max_concurrent_stations: 4
+  device_removal_timeout: 30  # seconds
+  board_detection_interval: 5  # seconds
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "factory-provisioning.log"
+  max_file_size: 10485760  # 10MB
+  backup_count: 5
+  console_output: true
+
+# Test Configuration
+testing:
+  enabled: true
+  tests:
+    - name: "boot_test"
+      command: "info"
+      expected_response: "OK"
+      timeout: 5
+      
+    - name: "wifi_test"
+      command: "wifi_scan"
+      expected_response: "OK"
+      timeout: 10
+      
+    - name: "memory_test"
+      command: "memory_info"
+      expected_response: "OK"
+      timeout: 5
+      
+    - name: "sensor_test"
+      command: "sensor_check"
+      expected_response: "OK"
+      timeout: 15
+
+# Device Registration Settings
+device_registration:
+  auto_register: true
+  generate_qr_codes: true
+  qr_code_size: 10
+  qr_code_border: 4
+  
+# Factory Data
+factory_info:
+  manufacturer: "Smart Home Solutions"
+  factory_location: "Manufacturing Plant A"
+  quality_level: "Production"
+  certification: "CE, FCC, RoHS"

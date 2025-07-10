@@ -1,0 +1,41 @@
+{
+  "ESP32_DAA1A756": {
+    "device_id": "ESP32_DAA1A756",
+    "device_secret": "tj0F1vX1cMfpuK2An4y4DYYqloHbkhd-",
+    "device_name": "Living Room Light Controller",
+    "device_type": "ESP32",
+    "manufacturer": "Espressif",
+    "description": "Sample ESP32 device for testing - Living Room Light Controller",
+    "created_at": "2025-07-08T22:36:07.365162",
+    "status": "registered",
+    "paired": false,
+    "user_id": null,
+    "location_id": null
+  },
+  "ESP32_78CFC986": {
+    "device_id": "ESP32_78CFC986",
+    "device_secret": "2dTMkdnyUJ8xsV2cyOBP-kyfLWG-EU39",
+    "device_name": "Kitchen Temperature Monitor",
+    "device_type": "ESP32",
+    "manufacturer": "Espressif",
+    "description": "Sample ESP32 device for testing - Kitchen Temperature Monitor",
+    "created_at": "2025-07-08T22:36:07.365783",
+    "status": "registered",
+    "paired": false,
+    "user_id": null,
+    "location_id": null
+  },
+  "ESP32_1633B201": {
+    "device_id": "ESP32_1633B201",
+    "device_secret": "G_nR1IVRTBYhaAuj_gFUovzmXBmlwooe",
+    "device_name": "Bedroom Security System",
+    "device_type": "ESP32",
+    "manufacturer": "Espressif",
+    "description": "Sample ESP32 device for testing - Bedroom Security System",
+    "created_at": "2025-07-08T22:36:07.366262",
+    "status": "registered",
+    "paired": false,
+    "user_id": null,
+    "location_id": null
+  }
+}

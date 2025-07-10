@@ -1,0 +1,346 @@
+# ESP32 Functional Tests
+# Comprehensive functional validation tests for ESP32 firmware
+
+name: "esp32_functional_tests"
+description: "Comprehensive functional tests for ESP32 firmware"
+platform: "esp32"
+category: "functional"
+
+# Setup commands
+setup_commands:
+  - "reset"
+  - "boot"
+  - "wait:5"
+  - "config_test_mode"
+
+# Teardown commands
+teardown_commands:
+  - "config_normal_mode"
+  - "reset"
+
+# Test cases
+test_cases:
+  - name: "wifi_connection_test"
+    description: "Test WiFi connection and reconnection"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 30
+    retry_count: 3
+    dependencies: ["wifi_scan_test"]
+    parameters:
+      command: "wifi_connect"
+      ssid: "TestNetwork"
+      password: "TestPassword"
+      timeout: 20
+      check_patterns:
+        - "WiFi connecting"
+        - "Connected"
+        - "IP address"
+        - "OK"
+    
+  - name: "mqtt_connection_test"
+    description: "Test MQTT connection and messaging"
+    test_type: "network"
+    platform: "esp32"
+    timeout: 20
+    retry_count: 3
+    dependencies: ["wifi_connection_test"]
+    parameters:
+      test_type: "mqtt"
+      broker: "test-broker.company.com"
+      port: 1883
+      topic: "test/esp32"
+      message: "Hello from ESP32"
+      timeout: 15
+    
+  - name: "http_client_test"
+    description: "Test HTTP client functionality"
+    test_type: "network"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    dependencies: ["wifi_connection_test"]
+    parameters:
+      test_type: "http"
+      endpoint: "/api/test"
+      method: "GET"
+      expected_status: 200
+      timeout: 10
+    
+  - name: "websocket_test"
+    description: "Test WebSocket connection"
+    test_type: "network"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    dependencies: ["wifi_connection_test"]
+    parameters:
+      test_type: "websocket"
+      url: "ws://test-ws.company.com/ws"
+      message: "ping"
+      expected_response: "pong"
+      timeout: 10
+    
+  - name: "ota_update_test"
+    description: "Test OTA update functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 120
+    retry_count: 1
+    dependencies: ["wifi_connection_test"]
+    parameters:
+      command: "ota_test"
+      firmware_url: "http://test-server.com/firmware.bin"
+      timeout: 90
+      check_patterns:
+        - "OTA update"
+        - "Download"
+        - "Install"
+        - "Reboot"
+        - "OK"
+    
+  - name: "sensor_reading_test"
+    description: "Test sensor data reading"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "sensor_test"
+      sensor_type: "temperature"
+      min_value: -40
+      max_value: 85
+      check_patterns:
+        - "Sensor reading"
+        - "Temperature:"
+        - "OK"
+    
+  - name: "actuator_control_test"
+    description: "Test actuator control"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "actuator_test"
+      actuator_type: "relay"
+      pin: 12
+      states: [0, 1, 0]
+      check_patterns:
+        - "Actuator test"
+        - "Relay"
+        - "State"
+        - "OK"
+    
+  - name: "pwm_test"
+    description: "Test PWM output functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "pwm_test"
+      pin: 5
+      frequency: 1000
+      duty_cycle: 50
+      duration: 5
+      check_patterns:
+        - "PWM test"
+        - "Frequency:"
+        - "Duty cycle:"
+        - "OK"
+    
+  - name: "adc_test"
+    description: "Test ADC (Analog-to-Digital Converter) functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 3
+    parameters:
+      command: "adc_test"
+      pin: 36
+      samples: 10
+      check_patterns:
+        - "ADC test"
+        - "Raw value:"
+        - "Voltage:"
+        - "OK"
+    
+  - name: "dac_test"
+    description: "Test DAC (Digital-to-Analog Converter) functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 10
+    retry_count: 3
+    parameters:
+      command: "dac_test"
+      pin: 25
+      value: 128
+      check_patterns:
+        - "DAC test"
+        - "Output value:"
+        - "OK"
+    
+  - name: "spi_test"
+    description: "Test SPI communication"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "spi_test"
+      mode: "master"
+      frequency: 1000000
+      data: "0xAA55"
+      check_patterns:
+        - "SPI test"
+        - "Mode:"
+        - "Frequency:"
+        - "OK"
+    
+  - name: "rtc_test"
+    description: "Test Real-Time Clock functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "rtc_test"
+      set_time: "2024-01-01 12:00:00"
+      check_patterns:
+        - "RTC test"
+        - "Time set:"
+        - "Time read:"
+        - "OK"
+    
+  - name: "nvs_test"
+    description: "Test Non-Volatile Storage (NVS) functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "nvs_test"
+      namespace: "test"
+      key: "test_key"
+      value: "test_value"
+      check_patterns:
+        - "NVS test"
+        - "Write:"
+        - "Read:"
+        - "OK"
+    
+  - name: "bluetooth_test"
+    description: "Test Bluetooth functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 20
+    retry_count: 3
+    parameters:
+      command: "bluetooth_test"
+      mode: "ble"
+      advertising_name: "ESP32_TEST"
+      check_patterns:
+        - "Bluetooth test"
+        - "BLE"
+        - "Advertising"
+        - "OK"
+    
+  - name: "deep_sleep_test"
+    description: "Test deep sleep functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 30
+    retry_count: 2
+    parameters:
+      command: "deep_sleep_test"
+      duration: 10
+      wakeup_source: "timer"
+      check_patterns:
+        - "Deep sleep test"
+        - "Going to sleep"
+        - "Wake up"
+        - "OK"
+    
+  - name: "interrupt_test"
+    description: "Test interrupt handling"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "interrupt_test"
+      pin: 0
+      trigger: "falling"
+      count: 5
+      check_patterns:
+        - "Interrupt test"
+        - "Pin:"
+        - "Trigger:"
+        - "Count:"
+        - "OK"
+    
+  - name: "task_test"
+    description: "Test FreeRTOS task functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "task_test"
+      tasks: 3
+      duration: 10
+      check_patterns:
+        - "Task test"
+        - "Tasks created:"
+        - "Tasks running"
+        - "OK"
+    
+  - name: "queue_test"
+    description: "Test FreeRTOS queue functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "queue_test"
+      queue_size: 10
+      items: 5
+      check_patterns:
+        - "Queue test"
+        - "Queue created"
+        - "Items sent:"
+        - "Items received:"
+        - "OK"
+    
+  - name: "mutex_test"
+    description: "Test FreeRTOS mutex functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "mutex_test"
+      tasks: 2
+      iterations: 100
+      check_patterns:
+        - "Mutex test"
+        - "Tasks:"
+        - "Iterations:"
+        - "OK"
+    
+  - name: "semaphore_test"
+    description: "Test FreeRTOS semaphore functionality"
+    test_type: "hardware"
+    platform: "esp32"
+    timeout: 15
+    retry_count: 3
+    parameters:
+      command: "semaphore_test"
+      count: 5
+      tasks: 3
+      check_patterns:
+        - "Semaphore test"
+        - "Count:"
+        - "Tasks:"
+        - "OK"

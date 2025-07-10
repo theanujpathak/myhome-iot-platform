@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Page - Home Automation</h1>
+    <p>If you can see this, the frontend server is working.</p>
+    <script>
+        console.log('Test page loaded successfully');
+        // Test Keycloak connectivity
+        fetch('http://localhost:8080/realms/home-automation')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Keycloak realm accessible:', data);
+                document.body.innerHTML += '<p>✅ Keycloak realm accessible</p>';
+            })
+            .catch(error => {
+                console.error('Keycloak error:', error);
+                document.body.innerHTML += '<p>❌ Keycloak connection error: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>
