@@ -1,0 +1,218 @@
+version: '3.8'
+
+services:
+  # Core Services
+  device-service:
+    image: i4planet/i4iot-device-service:latest
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/devicedb
+      - MQTT_BROKER_URL=mqtt://mqtt:1883
+    depends_on:
+      - postgres
+      - mqtt
+    networks:
+      - i4iot-network
+
+  ota-service:
+    image: i4planet/i4iot-ota-service:latest
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/otadb
+    depends_on:
+      - postgres
+    networks:
+      - i4iot-network
+
+  user-service:
+    image: i4planet/i4iot-user-service:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/userdb
+      - KEYCLOAK_URL=http://keycloak:8080
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - i4iot-network
+
+  scheduler-service:
+    image: i4planet/i4iot-scheduler-service:latest
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/schedulerdb
+    depends_on:
+      - postgres
+    networks:
+      - i4iot-network
+
+  discovery-service:
+    image: i4planet/i4iot-discovery-service:latest
+    ports:
+      - "3005:3005"
+    networks:
+      - i4iot-network
+
+  # Platform Systems
+  monitoring-system:
+    image: i4planet/i4iot-monitoring-system:latest
+    ports:
+      - "5002:5002"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - prometheus
+    networks:
+      - i4iot-network
+
+  deployment-system:
+    image: i4planet/i4iot-deployment-system:latest
+    ports:
+      - "5001:5001"
+    networks:
+      - i4iot-network
+
+  batch-flashing:
+    image: i4planet/i4iot-batch-flashing:latest
+    ports:
+      - "5000:5000"
+    networks:
+      - i4iot-network
+
+  # Frontend
+  admin-portal:
+    image: i4planet/i4iot-admin-portal:latest
+    ports:
+      - "8080:80"
+    networks:
+      - i4iot-network
+
+  web-app:
+    image: i4planet/i4iot-web-app:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8080/api
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8081
+    depends_on:
+      - keycloak
+    networks:
+      - i4iot-network
+
+  # Infrastructure Services
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=devicedb,otadb,userdb,schedulerdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - i4iot-network
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mqtt_data:/mosquitto/data
+      - mqtt_logs:/mosquitto/log
+    networks:
+      - i4iot-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - i4iot-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=password
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    command: start-dev
+    networks:
+      - i4iot-network
+
+  # Monitoring Infrastructure
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - i4iot-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3001"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - i4iot-network
+
+  # API Gateway
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - device-service
+      - ota-service
+      - user-service
+      - scheduler-service
+      - discovery-service
+      - admin-portal
+      - web-app
+    networks:
+      - i4iot-network
+
+volumes:
+  postgres_data:
+  mqtt_data:
+  mqtt_logs:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  i4iot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

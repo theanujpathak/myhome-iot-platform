@@ -2,7 +2,7 @@
 
 # Global settings
 global:
-  organization: "MyHome IoT"
+  organization: "i4iot"
   project: "Device Management Platform"
   environment: "production"
   

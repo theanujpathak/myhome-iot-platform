@@ -124,7 +124,7 @@ curl -X POST -H "X-API-Key: monitoring-api-key-1" \
 ```yaml
 # Global settings
 global:
-  organization: "MyHome IoT"
+  organization: "i4iot"
   project: "Device Management Platform"
   environment: "production"
 

@@ -1,10 +1,10 @@
-# 🏠 MyHome IoT Platform - Complete Access Guide
+# 🏠 i4iot Platform - Complete Access Guide
 
 ## 🚀 Quick Start (5 Minutes)
 
 ### **1. Start the Platform**
 ```bash
-cd /Users/anujpathak/Projects/myhome.i4planet.com
+cd /Users/anujpathak/Projects/i4iot.i4planet.com
 ./start-platform.sh
 ```
 
@@ -41,7 +41,7 @@ The **Admin Portal** is your unified control center for the entire IoT platform.
 open admin-portal/admin-portal.html
 
 # Method 2: From browser
-# Navigate to: file:///Users/anujpathak/Projects/myhome.i4planet.com/admin-portal/admin-portal.html
+# Navigate to: file:///Users/anujpathak/Projects/i4iot.i4planet.com/admin-portal/admin-portal.html
 ```
 
 ### **Features:**

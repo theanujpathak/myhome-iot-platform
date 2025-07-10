@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# MyHome IoT Platform Startup Script
+# i4iot Platform Startup Script
 # This script starts all the IoT platform services
 
 set -e
 
-echo "🏠 Starting MyHome IoT Platform..."
+echo "🏠 Starting i4iot Platform..."
 echo "=================================="
 
 # Colors for output
@@ -158,7 +158,7 @@ check_service_health "Deployment API" "http://localhost:5001/health"
 check_service_health "Batch Flashing API" "http://localhost:5000/health"
 
 # Display access information
-print_header "🎉 MyHome IoT Platform Started Successfully!"
+print_header "🎉 i4iot Platform Started Successfully!"
 echo ""
 echo "📋 Access Points:"
 echo "=================="

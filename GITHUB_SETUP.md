@@ -20,7 +20,7 @@ Your complete IoT Platform has been implemented and is ready for GitHub deployme
 ## 🏗️ Project Structure
 
 ```
-myhome.i4planet.com/
+i4iot.i4planet.com/
 ├── 🏠 admin-portal/           # Unified admin dashboard
 ├── ⚙️ .github/workflows/      # CI/CD automation
 ├── 🖥️ backend/               # Microservices architecture
@@ -48,8 +48,8 @@ myhome.i4planet.com/
 
 1. **Go to GitHub**: https://github.com/new
 2. **Repository Details**:
-   - Repository name: `myhome-iot-platform`
-   - Description: `Complete IoT Platform with CI/CD, Monitoring, and Multi-Platform Firmware Support`
+   - Repository name: `i4iot-platform`
+   - Description: `Complete i4iot Platform with CI/CD, Monitoring, and Multi-Platform IoT Device Management`
    - Visibility: Choose Public or Private
    - ✅ **Do NOT** initialize with README, .gitignore, or license (already exists)
 
@@ -62,7 +62,7 @@ myhome.i4planet.com/
 # brew install gh  # macOS
 # Then authenticate: gh auth login
 
-gh repo create myhome-iot-platform --public --description "Complete IoT Platform with CI/CD, Monitoring, and Multi-Platform Firmware Support"
+gh repo create i4iot-platform --public --description "Complete IoT Platform with CI/CD, Monitoring, and Multi-Platform Firmware Support"
 ```
 
 ## 🚀 Step 2: Push Your Code
@@ -71,7 +71,7 @@ After creating the repository, GitHub will show you the repository URL. Use thes
 
 ```bash
 # Add the remote repository (replace YOUR_USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/myhome-iot-platform.git
+git remote add origin https://github.com/YOUR_USERNAME/i4iot-platform.git
 
 # Push your code
 git branch -M main
@@ -80,7 +80,7 @@ git push -u origin main
 
 **Alternative with SSH** (if you have SSH keys configured):
 ```bash
-git remote add origin git@github.com:YOUR_USERNAME/myhome-iot-platform.git
+git remote add origin git@github.com:YOUR_USERNAME/i4iot-platform.git
 git branch -M main
 git push -u origin main
 ```
@@ -115,7 +115,7 @@ git push -u origin main
 ### Test Platform Access
 1. **Clone the repository** (to test from fresh state):
    ```bash
-   git clone https://github.com/YOUR_USERNAME/myhome-iot-platform.git
+   git clone https://github.com/YOUR_USERNAME/i4iot-platform.git
    cd myhome-iot-platform
    ```
 
@@ -196,7 +196,7 @@ gh auth login  # if using GitHub CLI
 ### Remote Already Exists
 ```bash
 git remote remove origin
-git remote add origin https://github.com/YOUR_USERNAME/myhome-iot-platform.git
+git remote add origin https://github.com/YOUR_USERNAME/i4iot-platform.git
 ```
 
 ### Push Rejected

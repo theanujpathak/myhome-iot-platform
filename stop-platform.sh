@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# MyHome IoT Platform Stop Script
+# i4iot Platform Stop Script
 # This script stops all the IoT platform services
 
-echo "🛑 Stopping MyHome IoT Platform..."
+echo "🛑 Stopping i4iot Platform..."
 echo "================================="
 
 # Colors for output
